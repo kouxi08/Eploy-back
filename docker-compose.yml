@@ -1,0 +1,12 @@
+version: '3'
+services:
+  go:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-service
+    ports:
+      - "8088:8088"
+    tty: true
+    volumes:
+      - .:/go/src/app
