@@ -37,3 +37,17 @@ func DeleteHandler(c echo.Context) error {
 
 	return c.String(http.StatusOK, "Record delete successfully")
 }
+
+func GetPodLogHandler(c echo.Context)error {
+	podName := c.QueryParam("podName")
+	if(podName == "") {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "The 'podname' query parameter is missing."})
+	}
+	fmt.Println(podName)
+	a,err := pkg.GetPodLog(podName) 
+	if err != nil {
+		errStr := err.Error()
+		return c.JSON(http.StatusBadRequest, map[string]string{"error":errStr})
+	}
+	return c.JSON(http.StatusOK, map[string]string{"message":a})
+}

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"strings"
+	// "errors"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -246,4 +248,38 @@ func DeleteIngress(ingressName string) {
 	fmt.Println("Deleted ingress.")
 }
 
+func GetPodLog(podName string) (string ,error){
+    clientset, err := NewKubernetesClient()
+    if err != nil {
+        log.Fatal(err)
+    }
+    namespace := "default"      // Specify the namespace
+	fmt.Println(podName)
+
+    podLogOpts := apiv1.PodLogOptions{}
+    req := clientset.CoreV1().Pods(namespace).GetLogs(podName, &podLogOpts)
+    podLogs, err := req.Stream(context.TODO())
+    if err != nil {
+		log.Println("GetPodLog:")
+        log.Println(err)
+		return "",err
+    }
+
+    defer podLogs.Close()
+    var sb strings.Builder
+    buf := make([]byte, 2000)
+    for {
+        numBytes, err := podLogs.Read(buf)
+        if numBytes == 0 {
+            break
+        }
+        if err != nil {
+            log.Fatal(err)
+        }
+        sb.Write(buf[:numBytes])
+    }
+    logOutput := sb.String()
+    fmt.Println(logOutput)
+    return logOutput,nil
+}
 func int32Ptr(i int32) *int32 { return &i }
