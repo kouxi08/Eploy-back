@@ -17,3 +17,8 @@ func DeleteResources(deploymentName string, serviceName string, ingressName stri
 	//ingress削除
 	DeleteIngress(ingressName)
 }
+func GetLogPodResources(podName string) (message string,err error) {
+	message,err = GetPodLog(podName)
+	return
+}
+

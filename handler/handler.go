@@ -44,7 +44,8 @@ func GetPodLogHandler(c echo.Context)error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "The 'podname' query parameter is missing."})
 	}
 	fmt.Println(podName)
-	a,err := pkg.GetPodLog(podName) 
+	// a,err := pkg.GetPodLog(podName) 
+	a,err := pkg.GetLogPodResources(podName) 
 	if err != nil {
 		errStr := err.Error()
 		return c.JSON(http.StatusBadRequest, map[string]string{"error":errStr})
