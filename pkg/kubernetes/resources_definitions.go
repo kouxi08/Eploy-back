@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
-func Deployment_definition(app string, deploymentName string) *appsv1.Deployment {
+func DeploymentDefinition(app string, deploymentName string) *appsv1.Deployment {
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -43,7 +43,7 @@ func Deployment_definition(app string, deploymentName string) *appsv1.Deployment
 	return deployment
 }
 
-func Service_definition(app string, serviceName string) *apiv1.Service {
+func ServiceDefinition(app string, serviceName string) *apiv1.Service {
 
 	service := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -65,7 +65,7 @@ func Service_definition(app string, serviceName string) *apiv1.Service {
 	return service
 }
 
-func Ingress_definition(ingressName string, hostName string, serviceName string) *networkingv1.Ingress {
+func IngressDefinition(ingressName string, hostName string, serviceName string) *networkingv1.Ingress {
 
 	nginxServiceName := "nginx"
 	pathType := networkingv1.PathTypePrefix
@@ -107,7 +107,7 @@ func Ingress_definition(ingressName string, hostName string, serviceName string)
 	return ingress
 }
 
-func Job__definition() *batchv1.Job {
+func JobDefinition() *batchv1.Job {
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kaniko",

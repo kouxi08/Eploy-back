@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	apiv1 "k8s.io/api/core/v1"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -17,12 +16,14 @@ func CreateDeployment(app string, deploymentName string) error {
 	if err != nil {
 		return err
 	}
-	deployment := Deployment_definition(app, deploymentName)
+	//deploymentの定義
+	deployment := DeploymentDefinition(app, deploymentName)
 
+	//k8sに送信
 	deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
 	result, err := deploymentsClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create deployment: %v", err)
 	}
 	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
 	return nil
@@ -34,12 +35,14 @@ func CreateService(app string, serviceName string) error {
 	if err != nil {
 		return err
 	}
-	service := Service_definition(app, serviceName)
+	//serviceの定義
+	service := ServiceDefinition(app, serviceName)
 
+	//k8sに送信
 	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
 	result, err := serviceClient.Create(context.TODO(), service, metav1.CreateOptions{})
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("failed to create service: %v", err)
 	}
 	fmt.Printf("Created service%q.\n", result.GetObjectMeta().GetName())
 	return nil
@@ -51,29 +54,33 @@ func CreateIngress(ingressName string, hostName string, serviceName string) erro
 	if err != nil {
 		return err
 	}
-	ingress := Ingress_definition(ingressName, hostName, serviceName)
+	//ingressの定義
+	ingress := IngressDefinition(ingressName, hostName, serviceName)
 
+	//k8sに送信
 	ingressClient := clientset.NetworkingV1().Ingresses("default")
 	result, err := ingressClient.Create(context.TODO(), ingress, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Print(err)
+		return fmt.Errorf("failed to create ingress: %v", err)
 	}
 	fmt.Printf("Created Ingress %q.\n", result.GetObjectMeta().GetName())
 	return nil
 }
 
-// kanikoのjobを生成
-func CreateKaniko() error {
+// kanikoのjobを生成する処理
+func CreateJob() error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return err
 	}
-	job := Job__definition()
+	//jobの定義
+	job := JobDefinition()
 
+	//k8sに送信
 	jobClient := clientset.BatchV1().Jobs("default")
 	result, err := jobClient.Create(context.Background(), job, metav1.CreateOptions{})
 	if err != nil {
-		fmt.Print(err)
+		return fmt.Errorf("failed to create job: %v", err)
 	}
 	fmt.Printf("Created Pod %q.\n", result.GetObjectMeta().GetName())
 	return nil

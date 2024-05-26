@@ -12,7 +12,7 @@ func CreateResources(siteName string, deploymentName string, serviceName string,
 }
 
 func CreateKanikoResouces() {
-	kubernetes.CreateKaniko()
+	kubernetes.CreateJob()
 }
 
 func DeleteResources(deploymentName string, serviceName string, ingressName string) {
