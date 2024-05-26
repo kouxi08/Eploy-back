@@ -1,10 +1,7 @@
 package kubernetes
 
 import (
-	"log"
 	"path/filepath"
-
-	// "errors"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -16,11 +13,11 @@ func NewKubernetesClient() (*kubernetes.Clientset, error) {
 
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 	return clientset, nil
 }

@@ -50,10 +50,10 @@ func GetPodLogHandler(c echo.Context) error {
 	}
 	fmt.Println(podName)
 	// a,err := pkg.GetPodLog(podName)
-	a, err := pkg.GetLogPodResources(podName)
+	resultMessage, err := pkg.GetLogPodResources(podName)
 	if err != nil {
 		errStr := err.Error()
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": errStr})
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message": a})
+	return c.JSON(http.StatusOK, map[string]string{"message": resultMessage})
 }
