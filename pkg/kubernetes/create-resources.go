@@ -1,13 +1,10 @@
-package pkg
+package kubernetes
 
 import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
-
-	// "errors"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
@@ -15,48 +12,13 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
-func NewKubernetesClient() (*kubernetes.Clientset, error) {
-	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
-
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return clientset, nil
-}
-
-func GetKubernetesNodes() {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-	nodes, err := clientset.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for y, nodes := range nodes.Items {
-		fmt.Printf("[%d] %s\n", y, nodes.GetName())
-	}
-
-}
-
 // deploymentを作成する処理
-func CreateDeployment(app string, deploymentName string) {
+func CreateDeployment(app string, deploymentName string) error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
 
 	deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
@@ -89,20 +51,19 @@ func CreateDeployment(app string, deploymentName string) {
 			},
 		},
 	}
-	fmt.Println("Creating deployment...")
 	result, err := deploymentsClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("Created deployment %q.\n", result.GetObjectMeta().GetName())
+	return nil
 }
 
 // serviceを作成する処理
-func CreateService(app string, serviceName string) {
+func CreateService(app string, serviceName string) error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
-		log.Fatal(err)
-		return
+		return err
 	}
 
 	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
@@ -124,14 +85,12 @@ func CreateService(app string, serviceName string) {
 			},
 		},
 	}
-
-	// Create Service
-	fmt.Println("Creating service...")
 	result, err := serviceClient.Create(context.TODO(), service, metav1.CreateOptions{})
 	if err != nil {
 		panic(err)
 	}
 	fmt.Printf("Created service%q.\n", result.GetObjectMeta().GetName())
+	return nil
 }
 
 // ingressを作成する処理
@@ -180,7 +139,6 @@ func CreateIngress(ingressName string, hostName string, serviceName string) erro
 			},
 		},
 	}
-	fmt.Println("Creating ingress...")
 	result, err := ingressClient.Create(context.TODO(), ingress, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Print(err)
@@ -250,73 +208,12 @@ func CreateKaniko() error {
 			},
 		},
 	}
-	fmt.Println("Creating ingress...")
 	result, err := podClient.Create(context.TODO(), pod, metav1.CreateOptions{})
 	if err != nil {
 		fmt.Print(err)
 	}
 	fmt.Printf("Created Pod %q.\n", result.GetObjectMeta().GetName())
 	return nil
-}
-
-// deploymentを削除する処理
-func DeleteDeployment(deploymentName string) {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	deploymentClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
-	deletePolicy := metav1.DeletePropagationForeground
-
-	fmt.Println("Deleting deployment...")
-	if err := deploymentClient.Delete(context.TODO(), deploymentName, metav1.DeleteOptions{
-		PropagationPolicy: &deletePolicy,
-	}); err != nil {
-		panic(err)
-	}
-	fmt.Println("Deleted deployment.")
-}
-
-// serviceを削除する処理
-func DeleteService(serviceName string) {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
-	deletePolicy := metav1.DeletePropagationForeground
-
-	fmt.Println("Deleting service...")
-	if err := serviceClient.Delete(context.TODO(), serviceName, metav1.DeleteOptions{
-		PropagationPolicy: &deletePolicy,
-	}); err != nil {
-		panic(err)
-	}
-	fmt.Println("Deleted service.")
-}
-
-// ingressを削除する処理
-func DeleteIngress(ingressName string) {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		log.Fatal(err)
-		return
-	}
-
-	ingressClient := clientset.NetworkingV1().Ingresses("default")
-	deletePolicy := metav1.DeletePropagationForeground
-
-	fmt.Println("Deleting ingress...")
-	if err := ingressClient.Delete(context.TODO(), ingressName, metav1.DeleteOptions{
-		PropagationPolicy: &deletePolicy,
-	}); err != nil {
-		panic(err)
-	}
-	fmt.Println("Deleted ingress.")
 }
 
 // pod内のlogを取得
@@ -354,4 +251,3 @@ func GetPodLog(podName string) (string, error) {
 	fmt.Println(logOutput)
 	return logOutput, nil
 }
-func int32Ptr(i int32) *int32 { return &i }

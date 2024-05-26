@@ -1,0 +1,8 @@
+{
+  "kubeConfig":{
+    "deploymentName": "-deployment",
+    "serviceName": "-service",
+    "ingressName": "-ingress",
+    "hostName": ".xxxx.com"
+  }
+}
