@@ -2,15 +2,17 @@ package main
 
 import (
 	"github.com/kouxi08/Eploy/handler"
-	
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+
 )
 
 func main() {
+	
 	//jsonファイルのデコード
 	//サーバ起動
 	server()
+	// handler.LogsTest() 
 }
 
 func server() {
@@ -30,6 +32,8 @@ func server() {
 	
 	//レコード削除処理へ
 	e.PATCH("/", handler.DeleteHandler)
+
+	e.GET("/", handler.LogsTest)
+
 	e.Logger.Fatal(e.Start(":8088"))
 }
-

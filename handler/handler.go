@@ -52,3 +52,17 @@ func GetPodLogHandler(c echo.Context)error {
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message":a})
 }
+
+func LogsTest(c echo.Context) error{
+	db,err := pkg.InitMysql()
+	if err != nil {
+		fmt.Println("err init database ")
+	}
+	fmt.Print(db)
+	result,err := pkg.GetLogs(db,"nginx.fast")
+	if err != nil {
+		fmt.Print("accesslog.GetLogs:")
+		fmt.Println(err)	}
+	fmt.Print(result)
+	return c.JSON(http.StatusOK, result)
+}

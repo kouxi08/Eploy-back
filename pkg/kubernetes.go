@@ -21,7 +21,6 @@ import (
 
 func NewKubernetesClient() (*kubernetes.Clientset, error) {
 	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
-
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
 		log.Fatal(err)
