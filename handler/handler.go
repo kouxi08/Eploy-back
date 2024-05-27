@@ -21,7 +21,12 @@ func CreateHandler(c echo.Context) error {
 
 	pkg.CreateResources(siteName, deploymentName, serviceName, ingressName, hostName)
 
-	return c.String(http.StatusOK, "Record added successfully")
+	return c.String(http.StatusOK, "Resources added successfully")
+}
+
+func CreateKanikoHandler(c echo.Context) error {
+	pkg.CreateKanikoResouces()
+	return c.String(http.StatusOK, "")
 }
 
 func DeleteHandler(c echo.Context) error {
@@ -35,20 +40,20 @@ func DeleteHandler(c echo.Context) error {
 
 	pkg.DeleteResources(deploymentName, serviceName, ingressName)
 
-	return c.String(http.StatusOK, "Record delete successfully")
+	return c.String(http.StatusOK, "Resources  delete successfully")
 }
 
-func GetPodLogHandler(c echo.Context)error {
+func GetPodLogHandler(c echo.Context) error {
 	podName := c.QueryParam("podName")
-	if(podName == "") {
+	if podName == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "The 'podname' query parameter is missing."})
 	}
 	fmt.Println(podName)
-	// a,err := pkg.GetPodLog(podName) 
-	a,err := pkg.GetLogPodResources(podName) 
+	// a,err := pkg.GetPodLog(podName)
+	resultMessage, err := pkg.GetLogPodResources(podName)
 	if err != nil {
 		errStr := err.Error()
-		return c.JSON(http.StatusBadRequest, map[string]string{"error":errStr})
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errStr})
 	}
-	return c.JSON(http.StatusOK, map[string]string{"message":a})
+	return c.JSON(http.StatusOK, map[string]string{"message": resultMessage})
 }

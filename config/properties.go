@@ -10,3 +10,4 @@ type KubeConfig struct {
 type Config struct {
 	KubeConfig KubeConfig `json:"kubeConfig"`
 }
+
