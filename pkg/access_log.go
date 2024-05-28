@@ -1,6 +1,7 @@
 package pkg
 
 import (
+	"log"
 	"database/sql"
 )
 
@@ -23,7 +24,7 @@ type Logs struct {
 	Method        sql.NullString `json:"method"`
 	HTTPReferrer  sql.NullString `json:"http_referrer"`
 	HTTPUserAgent sql.NullString `json:"http_user_agent"`
-  }
+}
   type LogsJSON struct {
 	  ID            int     `json:"id"`
 	  Time          string  `json:"time"`
@@ -44,8 +45,31 @@ type Logs struct {
 	  HTTPReferrer  string  `json:"http_referrer"`
 	  HTTPUserAgent string  `json:"http_user_agent"`
   }
-
-  func convertToJSON(log Logs) LogsJSON {
+//  sqlの結果をJSONに変換
+func ConvertToJSON(rows *sql.Rows) ([]LogsJSON,error){
+	logEntry := Logs{}
+	var result []LogsJSON
+	for rows.Next() {
+		// sqlの結果を取得
+		err := rows.Scan(
+		&logEntry.ID, &logEntry.Time, &logEntry.RemoteAddr, &logEntry.XForwardedFor, &logEntry.RequestID,
+		&logEntry.RemoteUser, &logEntry.BytesSent, &logEntry.RequestTime, &logEntry.Status, &logEntry.Vhost,
+		&logEntry.RequestProto, &logEntry.Path, &logEntry.RequestQuery, &logEntry.RequestLength, &logEntry.Duration,
+		&logEntry.Method, &logEntry.HTTPReferrer, &logEntry.HTTPUserAgent,
+		)
+		if err != nil {
+			return nil,err
+		}else {
+			// 構造体Logsを構造体LogsJSONに屁感
+			logJSON := convertToType(logEntry)
+			result = append(result,logJSON)
+		}
+	}
+	return result,nil
+}
+  
+// sql.NullString型をstring型に変換   
+func convertToType(log Logs) LogsJSON {
 	return LogsJSON{
 		ID:            log.ID,
 		Time:          getStringFromNullString(log.Time),

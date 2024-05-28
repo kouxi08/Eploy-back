@@ -37,7 +37,7 @@ func server() {
 	//リソース削除処理へ
 	e.PATCH("/", handler.DeleteHandler)
 
-	e.GET("/", handler.LogsTest)
+	e.GET("/", handler.GetMysqlPodLogHandler)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
