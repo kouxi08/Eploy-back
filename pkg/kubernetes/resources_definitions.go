@@ -109,7 +109,7 @@ func IngressDefinition(ingressName string, hostName string, serviceName string) 
 	return ingress
 }
 
-func JobDefinition(pvcName string, pvcUid string) *batchv1.Job {
+func JobDefinition() *batchv1.Job {
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kaniko",
@@ -118,14 +118,6 @@ func JobDefinition(pvcName string, pvcUid string) *batchv1.Job {
 			Template: apiv1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "kaniko",
-					OwnerReferences: []metav1.OwnerReference{
-						{
-							APIVersion: "v1",
-							Kind:       "PersistentVolumeClaim",
-							Name:       pvcName,
-							UID:        types.UID(pvcUid),
-						},
-					},
 				},
 
 				Spec: apiv1.PodSpec{
@@ -184,12 +176,20 @@ func JobDefinition(pvcName string, pvcUid string) *batchv1.Job {
 	return job
 }
 
-func PvcDefinition() *apiv1.PersistentVolumeClaim {
+func PvcDefinition(Name string, Uid string) *apiv1.PersistentVolumeClaim {
 	pvc := &apiv1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kaniko-pvc",
 			Annotations: map[string]string{
 				"volume.kubernetes.io/storage-class": "nfs",
+			},
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion: "batch/v1",
+					Kind:       "Job",
+					Name:       Name,
+					UID:        types.UID(Uid),
+				},
 			},
 		},
 		Spec: apiv1.PersistentVolumeClaimSpec{

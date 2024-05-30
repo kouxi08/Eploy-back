@@ -13,12 +13,12 @@ func CreateResources(siteName string, deploymentName string, serviceName string,
 
 func CreateKanikoResouces() error {
 	//pvc作成
-	pvcName, pvcUid, err := kubernetes.CreatePvc()
+	Name, Uid, err := kubernetes.CreateJob()
 	if err != nil {
 		return err
 	}
 	//job作成
-	kubernetes.CreateJob(pvcName, pvcUid)
+	kubernetes.CreatePvc(Name, Uid)
 	return nil
 }
 
