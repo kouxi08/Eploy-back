@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-	//jsonファイルのデコード
 	//サーバ起動
 	server()
 }

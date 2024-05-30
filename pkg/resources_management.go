@@ -11,8 +11,15 @@ func CreateResources(siteName string, deploymentName string, serviceName string,
 	kubernetes.CreateIngress(ingressName, hostName, serviceName)
 }
 
-func CreateKanikoResouces() {
-	kubernetes.CreateJob()
+func CreateKanikoResouces() error {
+	//pvc作成
+	pvcName, pvcUid, err := kubernetes.CreatePvc()
+	if err != nil {
+		return err
+	}
+	//job作成
+	kubernetes.CreateJob(pvcName, pvcUid)
+	return nil
 }
 
 func DeleteResources(deploymentName string, serviceName string, ingressName string) {

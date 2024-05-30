@@ -26,7 +26,7 @@ func CreateHandler(c echo.Context) error {
 
 func CreateKanikoHandler(c echo.Context) error {
 	pkg.CreateKanikoResouces()
-	return c.String(http.StatusOK, "")
+	return c.String(http.StatusOK, "Job create successfully")
 }
 
 func DeleteHandler(c echo.Context) error {

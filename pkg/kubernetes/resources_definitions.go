@@ -6,7 +6,9 @@ import (
 	apiv1 "k8s.io/api/core/v1"
 
 	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
@@ -107,7 +109,7 @@ func IngressDefinition(ingressName string, hostName string, serviceName string) 
 	return ingress
 }
 
-func JobDefinition() *batchv1.Job {
+func JobDefinition(pvcName string, pvcUid string) *batchv1.Job {
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kaniko",
@@ -116,7 +118,16 @@ func JobDefinition() *batchv1.Job {
 			Template: apiv1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "kaniko",
+					OwnerReferences: []metav1.OwnerReference{
+						{
+							APIVersion: "v1",
+							Kind:       "PersistentVolumeClaim",
+							Name:       pvcName,
+							UID:        types.UID(pvcUid),
+						},
+					},
 				},
+
 				Spec: apiv1.PodSpec{
 					Containers: []apiv1.Container{
 						{
@@ -141,7 +152,7 @@ func JobDefinition() *batchv1.Job {
 							Name: "dockerfile-storage",
 							VolumeSource: apiv1.VolumeSource{
 								PersistentVolumeClaim: &apiv1.PersistentVolumeClaimVolumeSource{
-									ClaimName: "local-claim",
+									ClaimName: "kaniko-pvc",
 								},
 							},
 						},
@@ -167,8 +178,31 @@ func JobDefinition() *batchv1.Job {
 				},
 			},
 			BackoffLimit:            int32Ptr(0),
-			TTLSecondsAfterFinished: int32Ptr(30),
+			TTLSecondsAfterFinished: int32Ptr(20),
 		},
 	}
 	return job
+}
+
+func PvcDefinition() *apiv1.PersistentVolumeClaim {
+	pvc := &apiv1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "kaniko-pvc",
+			Annotations: map[string]string{
+				"volume.kubernetes.io/storage-class": "nfs",
+			},
+		},
+		Spec: apiv1.PersistentVolumeClaimSpec{
+			AccessModes: []apiv1.PersistentVolumeAccessMode{
+				apiv1.ReadWriteMany,
+			},
+			StorageClassName: func() *string { s := "nfs"; return &s }(),
+			Resources: apiv1.ResourceRequirements{
+				Requests: apiv1.ResourceList{
+					apiv1.ResourceStorage: resource.MustParse("1Gi"),
+				},
+			},
+		},
+	}
+	return pvc
 }

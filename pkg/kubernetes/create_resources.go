@@ -68,13 +68,13 @@ func CreateIngress(ingressName string, hostName string, serviceName string) erro
 }
 
 // kanikoのjobを生成する処理
-func CreateJob() error {
+func CreateJob(pvcName string, pvcUid string) error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return err
 	}
 	//jobの定義
-	job := JobDefinition()
+	job := JobDefinition(pvcName, pvcUid)
 
 	//k8sに送信
 	jobClient := clientset.BatchV1().Jobs("default")
@@ -84,6 +84,28 @@ func CreateJob() error {
 	}
 	fmt.Printf("Created Pod %q.\n", result.GetObjectMeta().GetName())
 	return nil
+}
+
+// pvcを作成する処理
+func CreatePvc() (string, string, error) {
+	clientset, err := NewKubernetesClient()
+	if err != nil {
+		return "", "", err
+	}
+	//pvcの定義
+	pvc := PvcDefinition()
+
+	// PVCを作成
+	pvcClient := clientset.CoreV1().PersistentVolumeClaims("default")
+	result, err := pvcClient.Create(context.Background(), pvc, metav1.CreateOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	pvcUID := string(result.UID)
+	pvcName := result.Name
+	fmt.Printf("Created PVC UID: %s\n", pvcUID)
+	fmt.Printf("Created PVC %q.\n", result.GetObjectMeta().GetName())
+	return pvcName, pvcUID, err
 }
 
 // pod内のlogを取得する処理
