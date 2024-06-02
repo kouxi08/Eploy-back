@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,8 +85,29 @@ func CreateJob(githubUrl string, appName string, envVars []EnvVar) (string, stri
 	}
 	uid := string(result.UID)
 	name := result.Name
-	fmt.Printf("Created Pod %q.\n", result.GetObjectMeta().GetName())
+
 	return name, uid, nil
+}
+
+// jobを監視する処理
+func CheckJobCompletion(jobName string) error {
+	clientset, err := NewKubernetesClient()
+	if err != nil {
+		return err
+	}
+	for {
+		job, err := clientset.BatchV1().Jobs("default").Get(context.Background(), jobName, metav1.GetOptions{})
+		if err != nil {
+			panic(fmt.Errorf("failed to get job status: %v", err))
+		}
+		if job.Status.Succeeded > 0 {
+			fmt.Println("Job completed successfully!")
+			break
+		}
+		fmt.Println("Job is still running...")
+		time.Sleep(10 * time.Second)
+	}
+	return nil
 }
 
 // pvcを作成する処理

@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"fmt"
+
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
 )
 
@@ -14,13 +16,19 @@ func CreateResources(siteName string, deploymentName string, serviceName string,
 }
 
 func CreateKanikoResouces(githubUrl string, appName string, envVars []kubernetes.EnvVar) error {
+
 	//pvc作成
 	jobName, jobUid, err := kubernetes.CreateJob(githubUrl, appName, envVars)
 	if err != nil {
 		return err
 	}
+	go kubernetes.CheckJobCompletion(jobName)
+
 	//job作成
-	kubernetes.CreatePvc(jobName, jobUid, appName)
+	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
+		return fmt.Errorf("failed to create PVC: %v", err)
+	}
+
 	return nil
 }
 

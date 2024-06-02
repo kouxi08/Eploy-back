@@ -153,6 +153,7 @@ func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.
 								"--dockerfile=/workspace/Dockerfile",
 								"--context=dir:///workspace",
 								"--no-push",
+								// "--destination=kouxi00/test:latest",
 							},
 							Env: k8sEnvVars,
 							VolumeMounts: []apiv1.VolumeMount{
@@ -160,6 +161,11 @@ func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.
 									Name:      "dockerfile-storage",
 									MountPath: "/workspace",
 								},
+								// {
+								// 	Name:      "dockerfile-storage",
+								// 	MountPath: "/kaniko/.docker/config.json",
+								// 	ReadOnly:  true,
+								// },
 							},
 						},
 					},
@@ -173,6 +179,14 @@ func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.
 								},
 							},
 						},
+						// {
+						// 	Name: "dockerfile-storage",
+						// 	VolumeSource: apiv1.VolumeSource{
+						// 		HostPath: &apiv1.HostPathVolumeSource{
+						// 			Path: "/go/src/app/build/docker-config.json",
+						// 		},
+						// 	},
+						// },
 					},
 					InitContainers: []apiv1.Container{
 						{
