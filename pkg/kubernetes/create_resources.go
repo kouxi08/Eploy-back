@@ -88,23 +88,26 @@ func CreateJob() error {
 
 // pod内のlogを取得する処理
 func GetPodLog(podName string) (string, error) {
+	// k8sの初期化処理
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// k8sの初期化処理
 	namespace := "default" // Specify the namespace
 	fmt.Println(podName)
 
+	// podのLogを取得
 	podLogOpts := apiv1.PodLogOptions{}
 	req := clientset.CoreV1().Pods(namespace).GetLogs(podName, &podLogOpts)
 	podLogs, err := req.Stream(context.TODO())
 	if err != nil {
-		log.Println("GetPodLog:")
 		log.Println(err)
 		return "", err
 	}
-
 	defer podLogs.Close()
+	// podのLogを読み出して、stringに帰る
 	var sb strings.Builder
 	buf := make([]byte, 2000)
 	for {

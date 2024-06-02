@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/kouxi08/Eploy/config"
@@ -48,7 +49,7 @@ func GetPodLogHandler(c echo.Context) error {
 	if podName == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "The 'podname' query parameter is missing."})
 	}
-	fmt.Println(podName)
+	log.Println(podName)
 	// a,err := pkg.GetPodLog(podName)
 	resultMessage, err := pkg.GetLogPodResources(podName)
 	if err != nil {
@@ -56,4 +57,19 @@ func GetPodLogHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": errStr})
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": resultMessage})
+}
+
+func GetMysqlPodLogHandler(c echo.Context) error{
+	//  databaseの接続処理
+	db,err := pkg.InitMysql()
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	// アクセス処理
+	result,err := pkg.GetAccessLogs(db,"nginx.fast")
+	if err != nil {
+		log.Println(err)
+	}
+	return c.JSON(http.StatusOK, result)
 }
