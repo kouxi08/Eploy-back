@@ -89,6 +89,25 @@ func CreateJob(githubUrl string, appName string, envVars []EnvVar) (string, stri
 	return name, uid, nil
 }
 
+// pvcを作成する処理
+func CreatePvc(jobName string, jobUid string, appName string) error {
+	clientset, err := NewKubernetesClient()
+	if err != nil {
+		return err
+	}
+	//pvcの定義
+	pvc := PvcDefinition(jobName, jobUid, appName)
+
+	// PVCを作成
+	pvcClient := clientset.CoreV1().PersistentVolumeClaims("default")
+	result, err := pvcClient.Create(context.Background(), pvc, metav1.CreateOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	fmt.Printf("Created PVC %q.\n", result.GetObjectMeta().GetName())
+	return err
+}
+
 // jobを監視する処理
 func CheckJobCompletion(jobName string) error {
 	clientset, err := NewKubernetesClient()
@@ -108,25 +127,6 @@ func CheckJobCompletion(jobName string) error {
 		time.Sleep(15 * time.Second)
 	}
 	return nil
-}
-
-// pvcを作成する処理
-func CreatePvc(jobName string, jobUid string, appName string) error {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return err
-	}
-	//pvcの定義
-	pvc := PvcDefinition(jobName, jobUid, appName)
-
-	// PVCを作成
-	pvcClient := clientset.CoreV1().PersistentVolumeClaims("default")
-	result, err := pvcClient.Create(context.Background(), pvc, metav1.CreateOptions{})
-	if err != nil {
-		panic(err.Error())
-	}
-	fmt.Printf("Created PVC %q.\n", result.GetObjectMeta().GetName())
-	return err
 }
 
 // pod内のlogを取得する処理
