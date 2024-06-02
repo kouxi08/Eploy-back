@@ -6,6 +6,7 @@ import (
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
 )
 
+// アプリケーションを作成する際に動作させるリソースをまためたやつ
 func CreateResources(siteName string, deploymentName string, serviceName string, ingressName string, hostName string) {
 	//deployment作成
 	kubernetes.CreateDeployment(siteName, deploymentName)
@@ -15,16 +16,18 @@ func CreateResources(siteName string, deploymentName string, serviceName string,
 	kubernetes.CreateIngress(ingressName, hostName, serviceName)
 }
 
+// kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
 func CreateKanikoResouces(githubUrl string, appName string, envVars []kubernetes.EnvVar) error {
 
-	//pvc作成
+	//job作成
 	jobName, jobUid, err := kubernetes.CreateJob(githubUrl, appName, envVars)
 	if err != nil {
 		return err
 	}
+	//jobの処理状況を監視
 	go kubernetes.CheckJobCompletion(jobName)
 
-	//job作成
+	//pvc作成
 	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
 		return fmt.Errorf("failed to create PVC: %v", err)
 	}
@@ -32,6 +35,7 @@ func CreateKanikoResouces(githubUrl string, appName string, envVars []kubernetes
 	return nil
 }
 
+// アプリケーションを削除する際に動作させるリソースを定義したやつ
 func DeleteResources(deploymentName string, serviceName string, ingressName string) {
 	//deployment削除
 	kubernetes.DeleteDeployment(deploymentName)

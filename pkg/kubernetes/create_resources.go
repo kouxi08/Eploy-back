@@ -105,7 +105,7 @@ func CheckJobCompletion(jobName string) error {
 			break
 		}
 		fmt.Println("Job is still running...")
-		time.Sleep(10 * time.Second)
+		time.Sleep(15 * time.Second)
 	}
 	return nil
 }
