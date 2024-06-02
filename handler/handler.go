@@ -6,9 +6,11 @@ import (
 
 	"github.com/kouxi08/Eploy/config"
 	"github.com/kouxi08/Eploy/pkg"
+	"github.com/kouxi08/Eploy/pkg/kubernetes"
 	"github.com/labstack/echo/v4"
 )
 
+// アプリケーションの作成
 func CreateHandler(c echo.Context) error {
 	config, _ := config.LoadConfig("config.json")
 
@@ -24,11 +26,21 @@ func CreateHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Resources added successfully")
 }
 
+// Kanikoの処理を作成
 func CreateKanikoHandler(c echo.Context) error {
-	pkg.CreateKanikoResouces()
+	//envファイルを受け渡すために構造体を引っ張ってきてる(他にいい方法があるはず)
+	requestData := new(kubernetes.RequestData)
+	println("Received JSON:", requestData)
+	if err := c.Bind(requestData); err != nil {
+		fmt.Println("Error decoding JSON:", err)
+		return err
+	}
+
+	pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.EnvVars)
 	return c.String(http.StatusOK, "Job create successfully")
 }
 
+// アプリケーションの削除
 func DeleteHandler(c echo.Context) error {
 	config, _ := config.LoadConfig("config.json")
 
@@ -43,6 +55,7 @@ func DeleteHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Resources  delete successfully")
 }
 
+// アプリケーションのログを取得
 func GetPodLogHandler(c echo.Context) error {
 	podName := c.QueryParam("podName")
 	if podName == "" {

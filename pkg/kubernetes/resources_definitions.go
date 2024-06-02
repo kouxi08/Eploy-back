@@ -12,6 +12,18 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
 
+// jobで環境変数を入れる時に使う構造体
+type EnvVar struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+type RequestData struct {
+	Name    string   `json:"name"`
+	URL     string   `json:"url"`
+	EnvVars []EnvVar `json:"envVars"`
+}
+
+// deploymentのリソース設定
 func DeploymentDefinition(app string, deploymentName string) *appsv1.Deployment {
 
 	deployment := &appsv1.Deployment{
@@ -45,6 +57,7 @@ func DeploymentDefinition(app string, deploymentName string) *appsv1.Deployment 
 	return deployment
 }
 
+// serviceのリソース設定
 func ServiceDefinition(app string, serviceName string) *apiv1.Service {
 
 	service := &apiv1.Service{
@@ -67,6 +80,7 @@ func ServiceDefinition(app string, serviceName string) *apiv1.Service {
 	return service
 }
 
+// ingressのリソース設定
 func IngressDefinition(ingressName string, hostName string, serviceName string) *networkingv1.Ingress {
 
 	nginxServiceName := "nginx"
@@ -109,7 +123,17 @@ func IngressDefinition(ingressName string, hostName string, serviceName string) 
 	return ingress
 }
 
-func JobDefinition() *batchv1.Job {
+// jobtのリソース設定
+func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.Job {
+
+	var k8sEnvVars []apiv1.EnvVar
+	for _, envVar := range envVars {
+		k8sEnvVars = append(k8sEnvVars, apiv1.EnvVar{
+			Name:  envVar.Name,
+			Value: envVar.Value,
+		})
+	}
+
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "kaniko",
@@ -130,6 +154,7 @@ func JobDefinition() *batchv1.Job {
 								"--context=dir:///workspace",
 								"--no-push",
 							},
+							Env: k8sEnvVars,
 							VolumeMounts: []apiv1.VolumeMount{
 								{
 									Name:      "dockerfile-storage",
@@ -144,7 +169,7 @@ func JobDefinition() *batchv1.Job {
 							Name: "dockerfile-storage",
 							VolumeSource: apiv1.VolumeSource{
 								PersistentVolumeClaim: &apiv1.PersistentVolumeClaimVolumeSource{
-									ClaimName: "kaniko-pvc",
+									ClaimName: appName + "-pvc",
 								},
 							},
 						},
@@ -156,7 +181,7 @@ func JobDefinition() *batchv1.Job {
 							Command: []string{
 								"git",
 								"clone",
-								"https://github.com/kouxi08/Eploy-back.git",
+								githubUrl,
 								"/workspace",
 							},
 							VolumeMounts: []apiv1.VolumeMount{
@@ -176,10 +201,11 @@ func JobDefinition() *batchv1.Job {
 	return job
 }
 
-func PvcDefinition(Name string, Uid string) *apiv1.PersistentVolumeClaim {
+// pvcのリソース設定
+func PvcDefinition(Name string, Uid string, appName string) *apiv1.PersistentVolumeClaim {
 	pvc := &apiv1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "kaniko-pvc",
+			Name: appName + "-pvc",
 			Annotations: map[string]string{
 				"volume.kubernetes.io/storage-class": "nfs",
 			},

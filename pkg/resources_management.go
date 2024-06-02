@@ -1,6 +1,8 @@
 package pkg
 
-import "github.com/kouxi08/Eploy/pkg/kubernetes"
+import (
+	"github.com/kouxi08/Eploy/pkg/kubernetes"
+)
 
 func CreateResources(siteName string, deploymentName string, serviceName string, ingressName string, hostName string) {
 	//deployment作成
@@ -11,14 +13,14 @@ func CreateResources(siteName string, deploymentName string, serviceName string,
 	kubernetes.CreateIngress(ingressName, hostName, serviceName)
 }
 
-func CreateKanikoResouces() error {
+func CreateKanikoResouces(githubUrl string, appName string, envVars []kubernetes.EnvVar) error {
 	//pvc作成
-	Name, Uid, err := kubernetes.CreateJob()
+	jobName, jobUid, err := kubernetes.CreateJob(githubUrl, appName, envVars)
 	if err != nil {
 		return err
 	}
 	//job作成
-	kubernetes.CreatePvc(Name, Uid)
+	kubernetes.CreatePvc(jobName, jobUid, appName)
 	return nil
 }
 

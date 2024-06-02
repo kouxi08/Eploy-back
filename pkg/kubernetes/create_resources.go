@@ -68,13 +68,13 @@ func CreateIngress(ingressName string, hostName string, serviceName string) erro
 }
 
 // kanikoのjobを生成する処理
-func CreateJob() (string, string, error) {
+func CreateJob(githubUrl string, appName string, envVars []EnvVar) (string, string, error) {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return "", "", err
 	}
 	//jobの定義
-	job := JobDefinition()
+	job := JobDefinition(githubUrl, appName, envVars)
 
 	//k8sに送信
 	jobClient := clientset.BatchV1().Jobs("default")
@@ -89,13 +89,13 @@ func CreateJob() (string, string, error) {
 }
 
 // pvcを作成する処理
-func CreatePvc(Name string, Uid string) error {
+func CreatePvc(jobName string, jobUid string, appName string) error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return err
 	}
 	//pvcの定義
-	pvc := PvcDefinition(Name, Uid)
+	pvc := PvcDefinition(jobName, jobUid, appName)
 
 	// PVCを作成
 	pvcClient := clientset.CoreV1().PersistentVolumeClaims("default")
