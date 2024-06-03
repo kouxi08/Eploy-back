@@ -12,13 +12,13 @@ import (
 )
 
 // deploymentを作成する処理
-func CreateDeployment(app string, deploymentName string) error {
+func CreateDeployment(app string, deploymentName string, registryName string, envVars []EnvVar) error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return err
 	}
 	//deploymentの定義
-	deployment := DeploymentDefinition(app, deploymentName)
+	deployment := DeploymentDefinition(app, deploymentName, registryName, envVars)
 
 	//k8sに送信
 	deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
@@ -31,13 +31,13 @@ func CreateDeployment(app string, deploymentName string) error {
 }
 
 // serviceを作成する処理
-func CreateService(app string, serviceName string) error {
+func CreateService(app string, serviceName string, targetPort int) error {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return err
 	}
 	//serviceの定義
-	service := ServiceDefinition(app, serviceName)
+	service := ServiceDefinition(app, serviceName, targetPort)
 
 	//k8sに送信
 	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
@@ -69,13 +69,13 @@ func CreateIngress(ingressName string, hostName string, serviceName string) erro
 }
 
 // kanikoのjobを生成する処理
-func CreateJob(githubUrl string, appName string, envVars []EnvVar) (string, string, error) {
+func CreateJob(githubUrl string, appName string, registryName string, envVars []EnvVar) (string, string, error) {
 	clientset, err := NewKubernetesClient()
 	if err != nil {
 		return "", "", err
 	}
 	//jobの定義
-	job := JobDefinition(githubUrl, appName, envVars)
+	job := JobDefinition(githubUrl, appName, registryName, envVars)
 
 	//k8sに送信
 	jobClient := clientset.BatchV1().Jobs("default")
@@ -122,6 +122,11 @@ func CheckJobCompletion(jobName string) error {
 		if job.Status.Succeeded > 0 {
 			fmt.Println("Job completed successfully!")
 			break
+		} else if job.Status.Failed > 0 {
+			// ジョブのポッドのログを取得してエラーメッセージを出力する
+
+			fmt.Printf("Error")
+			return nil
 		}
 		fmt.Println("Job is still running...")
 		time.Sleep(15 * time.Second)

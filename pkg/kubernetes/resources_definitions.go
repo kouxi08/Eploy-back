@@ -20,11 +20,12 @@ type EnvVar struct {
 type RequestData struct {
 	Name    string   `json:"name"`
 	URL     string   `json:"url"`
+	Port    string   `json:"port"`
 	EnvVars []EnvVar `json:"envVars"`
 }
 
 // deploymentのリソース設定
-func DeploymentDefinition(app string, deploymentName string) *appsv1.Deployment {
+func DeploymentDefinition(appName string, deploymentName string, registryName string, envVars []EnvVar) *appsv1.Deployment {
 
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -34,20 +35,21 @@ func DeploymentDefinition(app string, deploymentName string) *appsv1.Deployment 
 			Replicas: int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"app": app,
+					"app": appName,
 				},
 			},
 			Template: apiv1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"app": app,
+						"app": appName,
 					},
 				},
 				Spec: apiv1.PodSpec{
 					Containers: []apiv1.Container{
 						{
 							Name:  "web",
-							Image: "kouxi00/portfolio",
+							Image: registryName,
+							Env:   EnvDefinition(envVars),
 						},
 					},
 				},
@@ -58,7 +60,7 @@ func DeploymentDefinition(app string, deploymentName string) *appsv1.Deployment 
 }
 
 // serviceのリソース設定
-func ServiceDefinition(app string, serviceName string) *apiv1.Service {
+func ServiceDefinition(appName string, serviceName string, targetPort int) *apiv1.Service {
 
 	service := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -69,15 +71,25 @@ func ServiceDefinition(app string, serviceName string) *apiv1.Service {
 				{
 					Name:       "http",
 					Port:       80,
-					TargetPort: intstr.FromInt(3000),
+					TargetPort: intstr.FromInt(targetPort),
 				},
 			},
 			Selector: map[string]string{
-				"app": app,
+				"app": appName,
 			},
 		},
 	}
 	return service
+}
+func EnvDefinition(envVars []EnvVar) []apiv1.EnvVar {
+	var k8sEnvVars []apiv1.EnvVar
+	for _, envVar := range envVars {
+		k8sEnvVars = append(k8sEnvVars, apiv1.EnvVar{
+			Name:  envVar.Name,
+			Value: envVar.Value,
+		})
+	}
+	return k8sEnvVars
 }
 
 // ingressのリソース設定
@@ -124,15 +136,7 @@ func IngressDefinition(ingressName string, hostName string, serviceName string) 
 }
 
 // jobtのリソース設定
-func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.Job {
-
-	var k8sEnvVars []apiv1.EnvVar
-	for _, envVar := range envVars {
-		k8sEnvVars = append(k8sEnvVars, apiv1.EnvVar{
-			Name:  envVar.Name,
-			Value: envVar.Value,
-		})
-	}
+func JobDefinition(githubUrl string, appName string, registryName string, envVars []EnvVar) *batchv1.Job {
 
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -145,49 +149,6 @@ func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.
 				},
 
 				Spec: apiv1.PodSpec{
-					Containers: []apiv1.Container{
-						{
-							Name:  "kaniko",
-							Image: "gcr.io/kaniko-project/executor:latest",
-							Args: []string{
-								"--dockerfile=/workspace/Dockerfile",
-								"--context=dir:///workspace",
-								"--no-push",
-								// "--destination=kouxi00/test:latest",
-							},
-							Env: k8sEnvVars,
-							VolumeMounts: []apiv1.VolumeMount{
-								{
-									Name:      "dockerfile-storage",
-									MountPath: "/workspace",
-								},
-								// {
-								// 	Name:      "dockerfile-storage",
-								// 	MountPath: "/kaniko/.docker/config.json",
-								// 	ReadOnly:  true,
-								// },
-							},
-						},
-					},
-					RestartPolicy: "Never",
-					Volumes: []apiv1.Volume{
-						{
-							Name: "dockerfile-storage",
-							VolumeSource: apiv1.VolumeSource{
-								PersistentVolumeClaim: &apiv1.PersistentVolumeClaimVolumeSource{
-									ClaimName: appName + "-pvc",
-								},
-							},
-						},
-						// {
-						// 	Name: "dockerfile-storage",
-						// 	VolumeSource: apiv1.VolumeSource{
-						// 		HostPath: &apiv1.HostPathVolumeSource{
-						// 			Path: "/go/src/app/build/docker-config.json",
-						// 		},
-						// 	},
-						// },
-					},
 					InitContainers: []apiv1.Container{
 						{
 							Name:  "init-gitclone",
@@ -202,6 +163,55 @@ func JobDefinition(githubUrl string, appName string, envVars []EnvVar) *batchv1.
 								{
 									Name:      "dockerfile-storage",
 									MountPath: "/workspace",
+								},
+							},
+						},
+					},
+					Containers: []apiv1.Container{
+						{
+							Name:  "kaniko",
+							Image: "gcr.io/kaniko-project/executor:latest",
+							Args: []string{
+								"--dockerfile=/workspace/Dockerfile",
+								"--context=dir:///workspace",
+								// "--no-push",
+								// "--destination=docker.io/kouxi00/test:latest",
+								"--destination=" + registryName + ":latest",
+							},
+							Env: EnvDefinition(envVars),
+							VolumeMounts: []apiv1.VolumeMount{
+								{
+									Name:      "dockerfile-storage",
+									MountPath: "/workspace",
+								},
+								{
+									Name:      "kaniko-secret",
+									MountPath: "/kaniko/.docker",
+								},
+							},
+						},
+					},
+					RestartPolicy: "Never",
+					Volumes: []apiv1.Volume{
+						{
+							Name: "dockerfile-storage",
+							VolumeSource: apiv1.VolumeSource{
+								PersistentVolumeClaim: &apiv1.PersistentVolumeClaimVolumeSource{
+									ClaimName: appName + "-pvc",
+								},
+							},
+						},
+						{
+							Name: "kaniko-secret",
+							VolumeSource: apiv1.VolumeSource{
+								Secret: &apiv1.SecretVolumeSource{
+									SecretName: "dockerhub-secret",
+									Items: []apiv1.KeyToPath{
+										{
+											Key:  ".dockerconfigjson",
+											Path: "config.json",
+										},
+									},
 								},
 							},
 						},
