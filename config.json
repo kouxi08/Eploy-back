@@ -3,6 +3,7 @@
     "deploymentName": "-deployment",
     "serviceName": "-service",
     "ingressName": "-ingress",
-    "hostName": ".xxxx.com"
+    "hostName": ".xxxx.com",
+    "registryName": "docker.io/kouxi00/"
   }
 }

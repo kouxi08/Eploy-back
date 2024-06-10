@@ -5,15 +5,13 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-
 )
 
 func main() {
-	
-	//jsonファイルのデコード
+
 	//サーバ起動
 	server()
-	// handler.LogsTest() 
+	// handler.LogsTest()
 }
 
 func server() {
@@ -38,6 +36,7 @@ func server() {
 	e.PATCH("/", handler.DeleteHandler)
 
 	e.GET("/", handler.GetMysqlPodLogHandler)
+	e.GET("/dashboard", handler.GetDashboard)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
