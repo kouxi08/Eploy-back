@@ -46,6 +46,8 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	if err != nil {
 		return err
 	}
+
+	//pvc作成
 	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
 		return fmt.Errorf("failed to create PVC: %v", err)
 	}
@@ -68,13 +70,7 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	//ingress作成
 	kubernetes.CreateIngress(ingressName, hostName, serviceName)
 
-	// go kubernetes.CheckJobCompletion(jobName)
-
-	//jobの監視でエラーを吐いた場合は即returnしてnilの場合はpodの作成を行う処理を下に書く
-
-	//pvc作成
 	return nil
-
 }
 
 // アプリケーションを削除する際に動作させるリソースを定義したやつ
@@ -96,4 +92,9 @@ func DeleteResources(siteName string) {
 func GetLogPodResources(podName string) (message string, err error) {
 	message, err = kubernetes.GetPodLog(podName)
 	return
+}
+
+// podのステータスを確認するやつ
+func GetStatusResources(deploymentName string) {
+	kubernetes.GetStatus(deploymentName)
 }
