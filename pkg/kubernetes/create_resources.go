@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -171,4 +172,61 @@ func GetPodLog(podName string) (string, error) {
 	logOutput := sb.String()
 	fmt.Println(logOutput)
 	return logOutput, nil
+}
+
+// deployment名からpodのステータスを確認する処理
+func GetStatus(deploymentName string) {
+	// k8sの初期化処理
+	clientset, err := NewKubernetesClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	namespace := "default"
+
+	//デプロイメントの取得
+	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
+	if err != nil {
+		log.Fatalf("Error getting deployment: %s", err.Error())
+	}
+
+	labelSelector := metav1.FormatLabelSelector(deployment.Spec.Selector)
+	replicaSets, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		log.Fatalf("Error listing ReplicaSets: %s", err.Error())
+	}
+
+	if len(replicaSets.Items) == 0 {
+		log.Fatalf("No ReplicaSets found for deployment %s", deploymentName)
+	}
+
+	var latestReplicaSet *appsv1.ReplicaSet
+	for _, rs := range replicaSets.Items {
+		if latestReplicaSet == nil || rs.CreationTimestamp.After(latestReplicaSet.CreationTimestamp.Time) {
+			latestReplicaSet = &rs
+		}
+	}
+
+	if latestReplicaSet == nil {
+		log.Fatalf("No latest ReplicaSet found for deployment %s", deploymentName)
+	}
+
+	podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
+			MatchLabels: latestReplicaSet.Spec.Template.Labels,
+		}),
+	})
+
+	if err != nil {
+		log.Fatalf("Error listing pods: %s", err.Error())
+	}
+
+	if len(podList.Items) > 0 {
+		// 最初のPodのステータスを表示
+		pod := podList.Items[0]
+		fmt.Printf("Pod Name: %s, Status: %s\n", pod.Name, pod.Status.Phase)
+	} else {
+		fmt.Println("No pods found for the deployment")
+	}
+
 }

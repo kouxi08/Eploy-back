@@ -76,3 +76,9 @@ func GetMysqlPodLogHandler(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, result)
 }
+
+// func GetStatusHandler(c echo.Context) error {
+// 	deploymentName := c.FormValue("name")
+// 	result, err := pkg.GetStatusResources(deploymentName)
+// 	return c.JSON(http.StatusOK, )
+// }
