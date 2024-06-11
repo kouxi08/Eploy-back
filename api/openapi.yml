@@ -1,0 +1,308 @@
+openapi: "3.0.3"
+
+info:
+  version: "1.0.0"
+  title: "Eploy API"
+
+servers:
+  - url: "http://{host}:8081/api/v1"
+    description: go service api server endpoint application
+    variables:
+      host:
+        default: localhost
+        enum:
+          - localhost
+
+tags:
+  - name: project
+    description: プロジェクトに関連するエンドポイント
+  - name: account
+    description: アカウントに関連するエンドポイント
+
+components:
+  schemas:
+    project:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "hoge-site"
+        domain:
+          type: string
+          example: "non-deri.kouxi.com"
+        url:
+          type: string
+          example: "https://github.com/kouxi08/hoge"
+        status:
+          type: string
+          example: "running"
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+            example:
+              error: "BadRequest"
+              message: "Invalid request parameters"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+            example:
+              error: "Unauthorized"
+              message: "Invalid email or password"
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Forbidden"
+              message:
+                type: string
+                example: "You do not have permission to access this resource"
+
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "NotFound"
+              message:
+                type: string
+                example: "The requested resource was not found"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+            example:
+              error: "InternalServerError"
+              message: "An unexpected error occurred"
+
+paths:
+  /projects:
+    get:
+      summary: プロジェクト一覧を取得
+      tags:
+        - project
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/project"
+              examples:
+                example1:
+                  summary: Example response with data
+                  value:
+                    projects:
+                      - id: 1
+                        name: "hoge-site"
+                        domain: "non-deri.kouxi.com"
+                        url: "https://github.com/kouxi08/hoge"
+                        status: "running"
+                      - id: 2
+                        name: "fuga-site"
+                        domain: "fuga.kouxi.com"
+                        url: "https://github.com/kouxi08/fuga"
+                        status: "stopped"
+                example2:
+                  summary: Example response without data
+                  value:
+                    projects: []
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: プロジェクトを新規作成
+      tags:
+        - project
+      requestBody:
+        description: "投稿内容"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                git_repository_url:
+                  type: string
+                  example: "https://github.com/kouxi08/hoge"
+                project_name:
+                  type: string
+                  example: "hoge-site"
+                port:
+                  type: integer
+                  example: 8080
+                environments:
+                  type: object
+                  additionalProperties:
+                    type: string
+            examples:
+              example1:
+                summary: プロジェクトの新規作成
+                value:
+                  git_repository_url: "https://github.com/kouxi08/hoge"
+                  project_name: "hoge-site"
+                  port: 8080
+                  environments:
+                    MYSQL_USER: "user"
+                    MYSQL_PASSWORD: "password"
+
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  project:
+                    $ref: "#/components/schemas/project"
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+  /projects/{id}:
+    get:
+      summary: プロジェクトの詳細情報を取得
+      tags:
+        - project
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  application:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      url:
+                        type: string
+                        example: ""
+                      created_date_time:
+                        type: string
+                        example: "2020-01-31T23:59:59+09:00"
+                        format: date-time
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: プロジェクトを削除
+      tags:
+        - project
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+
+  /account/setting/name:
+    put:
+      summary: ユーザ名を変更
+      tags:
+        - account
+      requestBody:
+        description: "投稿内容"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "名前"
+      responses:
+        200:
+          description: OK
+        400:
+          $ref: "#/components/responses/BadRequest"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+        404:
+          $ref: "#/components/responses/NotFound"
+        500:
+          $ref: "#/components/responses/InternalServerError"
