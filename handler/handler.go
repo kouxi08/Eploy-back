@@ -77,8 +77,17 @@ func GetMysqlPodLogHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-// func GetStatusHandler(c echo.Context) error {
-// 	deploymentName := c.FormValue("name")
-// 	result, err := pkg.GetStatusResources(deploymentName)
-// 	return c.JSON(http.StatusOK, )
-// }
+func GetDashboard(c echo.Context)error {
+	userid := 1
+	db, err := pkg.InitMysql()
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	result,err := pkg.GetApp(db, userid)
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	return c.JSON(http.StatusOK, result)
+}

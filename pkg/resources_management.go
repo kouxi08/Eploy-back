@@ -95,6 +95,7 @@ func GetLogPodResources(podName string) (message string, err error) {
 }
 
 // podのステータスを確認するやつ
-func GetStatusResources(deploymentName string) {
-	kubernetes.GetStatus(deploymentName)
+func GetStatusResources(deploymentName string) (status string,err error){
+	status,err = kubernetes.GetStatus(deploymentName)
+	return status,err
 }

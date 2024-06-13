@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	//サーバ起動
 	server()
 	// handler.LogsTest()
@@ -36,6 +35,7 @@ func server() {
 	e.PATCH("/", handler.DeleteHandler)
 
 	e.GET("/", handler.GetMysqlPodLogHandler)
+	e.GET("/dashboard", handler.GetDashboard)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
