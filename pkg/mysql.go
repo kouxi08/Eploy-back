@@ -65,3 +65,13 @@ func GetApp(db *sql.DB,userid int) (*Response,error)  {
 	}
 	return  result,nil
 }
+func InsertApp(db *sql.DB,application_name string,userid int,domain string,github_url string,deployment_name string) {
+	ins, err := db.Prepare("INSERT INTO app(application_name,domain,github_url,deployment_name) VALUES(?,?,?,?,?)")
+	if err != nil {
+		return nil,err
+	}
+	rows, err := stmt.Query()
+	result ,err:= ConvertToJSONDs(rows)
+
+
+}

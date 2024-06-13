@@ -175,11 +175,11 @@ func GetPodLog(podName string) (string, error) {
 }
 
 // deployment名からpodのステータスを確認する処理
-func GetStatus(deploymentName string) {
+func GetStatus(deploymentName string)(string,error) {
 	// k8sの初期化処理
 	clientset, err := NewKubernetesClient()
 	if err != nil {
-		log.Fatal(err)
+		return "",err
 	}
 
 	namespace := "default"
@@ -187,13 +187,13 @@ func GetStatus(deploymentName string) {
 	//デプロイメントの取得
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
-		log.Fatalf("Error getting deployment: %s", err.Error())
+		return "",err
 	}
 
 	labelSelector := metav1.FormatLabelSelector(deployment.Spec.Selector)
 	replicaSets, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
-		log.Fatalf("Error listing ReplicaSets: %s", err.Error())
+		return "",err
 	}
 
 	if len(replicaSets.Items) == 0 {
@@ -208,7 +208,7 @@ func GetStatus(deploymentName string) {
 	}
 
 	if latestReplicaSet == nil {
-		log.Fatalf("No latest ReplicaSet found for deployment %s", deploymentName)
+		return "",err
 	}
 
 	podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
@@ -218,15 +218,17 @@ func GetStatus(deploymentName string) {
 	})
 
 	if err != nil {
-		log.Fatalf("Error listing pods: %s", err.Error())
+		return "",err
 	}
 
 	if len(podList.Items) > 0 {
 		// 最初のPodのステータスを表示
 		pod := podList.Items[0]
 		fmt.Printf("Pod Name: %s, Status: %s\n", pod.Name, pod.Status.Phase)
+		return string(pod.Status.Phase),nil
 	} else {
 		fmt.Println("No pods found for the deployment")
+		return "No pods found for the deployment",nil
 	}
 
 }

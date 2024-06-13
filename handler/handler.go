@@ -91,3 +91,20 @@ func GetDashboard(c echo.Context)error {
 	}
 	return c.JSON(http.StatusOK, result)
 }
+
+
+func CreateAPP(c echo.Context)error{
+	gitURL := "https://github.com/kouxi08/pixivbot"
+	appName := "nginx"
+	user_id := 1
+	Dockerfile := "Dockerfile"
+	domain := "ru-ru.kouxi.com"
+	deployment_name := "nginx-deployment"
+	db, err := pkg.InitMysql()
+	if err != nil {
+		log.Println(err)
+		return c.JSON(http.StatusInternalServerError, err)
+	}
+	pkg.InsertApp(db,appName,user_id,)
+
+}
