@@ -36,7 +36,6 @@ func server() {
 
 	e.GET("/", handler.GetMysqlPodLogHandler)
 	e.GET("/dashboard", handler.GetDashboard)
-	e.POST("createapp", handler.CreateAPP)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
