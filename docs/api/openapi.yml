@@ -5,7 +5,7 @@ info:
   title: "Eploy API"
 
 servers:
-  - url: "http://{host}:8081/api/v1"
+  - url: "http://{host}:8080"
     description: go service api server endpoint application
     variables:
       host:
@@ -230,18 +230,25 @@ paths:
               schema:
                 type: object
                 properties:
-                  application:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      url:
-                        type: string
-                        example: ""
-                      created_date_time:
-                        type: string
-                        example: "2020-01-31T23:59:59+09:00"
-                        format: date-time
+                  name:
+                    type: string
+                    example: ApplicationName
+                  url:
+                    type: string
+                    example: "https://github.com/kouxi08/Artfolio-template.git"
+                  created_date_time:
+                    type: string
+                    format: date-time
+                  domain:
+                    type: string
+                    example: "test.kouxi.jp"
+                  access_log:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        test: { type: string }
+
         400:
           $ref: "#/components/responses/BadRequest"
         401:
