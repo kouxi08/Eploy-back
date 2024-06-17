@@ -178,9 +178,14 @@ paths:
                   type: integer
                   example: 8080
                 environments:
-                  type: object
-                  additionalProperties:
-                    type: string
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
             examples:
               example1:
                 summary: プロジェクトの新規作成
@@ -189,8 +194,10 @@ paths:
                   project_name: "hoge-site"
                   port: 8080
                   environments:
-                    MYSQL_USER: "user"
-                    MYSQL_PASSWORD: "password"
+                    - name: "MYSQL_USER"
+                      value: "user"
+                    - name: "MYSQL_PASSWORD"
+                      value: "password"
 
       responses:
         201:
