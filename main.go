@@ -13,6 +13,7 @@ func main() {
 	// handler.LogsTest()
 }
 
+
 func server() {
 	//インスタンス作成
 	e := echo.New()
@@ -33,9 +34,9 @@ func server() {
 
 	//リソース削除処理へ
 	e.PATCH("/", handler.DeleteHandler)
-
+	e.POST("/user", handler.Test)
 	e.GET("/", handler.GetMysqlPodLogHandler)
 	e.GET("/dashboard", handler.GetDashboard)
-
+	e.POST("/createapp", handler.CreateApp)
 	e.Logger.Fatal(e.Start(":8088"))
 }
