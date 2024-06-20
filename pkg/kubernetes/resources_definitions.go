@@ -175,7 +175,6 @@ func JobDefinition(githubUrl string, appName string, registryName string, envVar
 								"--dockerfile=/workspace/Dockerfile",
 								"--context=dir:///workspace",
 								// "--no-push",
-								// "--destination=docker.io/kouxi00/test:latest",
 								"--destination=" + registryName + ":latest",
 							},
 							Env: EnvDefinition(envVars),

@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/kouxi08/Eploy/config"
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
+	"github.com/kouxi08/Eploy/utils"
 )
 
 // アプリケーションを作成する際に動作させるリソースをまためたやつ
 func CreateResources(siteName string, targetPort string) {
-	config, _ := config.LoadConfig("config.json")
+	utils, _ := utils.LoadConfig("config.json")
 
 	// deploymentName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.IngressName)
-	hostName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.HostName)
+	serviceName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.ServiceName)
+	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
+	hostName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.HostName)
 	// registryName := fmt.Sprintf("%s%s", config.KubeConfig.RegistryName, siteName)
 	targetPortInt, _ := strconv.Atoi(targetPort)
 
@@ -29,13 +29,13 @@ func CreateResources(siteName string, targetPort string) {
 
 // kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
 func CreateKanikoResouces(githubUrl string, appName string, targetPort string, envVars []kubernetes.EnvVar) error {
-	config, _ := config.LoadConfig("config.json")
+	config, _ := utils.LoadConfig("config.json")
 
-	deploymentName := fmt.Sprintf("%s%s", appName, config.KubeConfig.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", appName, config.KubeConfig.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", appName, config.KubeConfig.IngressName)
-	hostName := fmt.Sprintf("%s%s", appName, config.KubeConfig.HostName)
-	registryName := fmt.Sprintf("%s%s", config.KubeConfig.RegistryName, appName)
+	deploymentName := fmt.Sprintf("%s%s", appName, config.KubeManifest.DeploymentName)
+	serviceName := fmt.Sprintf("%s%s", appName, config.KubeManifest.ServiceName)
+	ingressName := fmt.Sprintf("%s%s", appName, config.KubeManifest.IngressName)
+	hostName := fmt.Sprintf("%s%s", appName, config.KubeManifest.HostName)
+	registryName := fmt.Sprintf("%s%s", config.KubeManifest.RegistryName, appName)
 	targetPortInt, err := strconv.Atoi(targetPort)
 	if err != nil {
 		return err
@@ -75,11 +75,11 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 
 // アプリケーションを削除する際に動作させるリソースを定義したやつ
 func DeleteResources(siteName string) {
-	config, _ := config.LoadConfig("config.json")
+	utils, _ := utils.LoadConfig("config.json")
 
-	deploymentName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.IngressName)
+	deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
+	serviceName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.ServiceName)
+	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
 
 	//deployment削除
 	kubernetes.DeleteDeployment(deploymentName)
@@ -95,7 +95,7 @@ func GetLogPodResources(podName string) (message string, err error) {
 }
 
 // podのステータスを確認するやつ
-func GetStatusResources(deploymentName string) (status string,err error){
-	status,err = kubernetes.GetStatus(deploymentName)
-	return status,err
+func GetStatusResources(deploymentName string) (status string, err error) {
+	status, err = kubernetes.GetStatus(deploymentName)
+	return status, err
 }

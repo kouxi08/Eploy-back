@@ -77,14 +77,14 @@ func GetMysqlPodLogHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-func GetDashboard(c echo.Context)error {
+func GetDashboard(c echo.Context) error {
 	userid := 1
 	db, err := pkg.InitMysql()
 	if err != nil {
 		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, err)
 	}
-	result,err := pkg.GetApp(db, userid)
+	result, err := pkg.GetApp(db, userid)
 	if err != nil {
 		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, err)
@@ -93,13 +93,14 @@ func GetDashboard(c echo.Context)error {
 }
 
 // アプリを登録する時の処理、jsonで以下形式で登録
-// {
-//     "appName": "nginx",
-//     "domain": "ru-ru.kouxi.com",
-//     "gitURL": "https://github.com/kouxi08/pixivbot",
-//     "deploymentName": "nginx-deployment"
-// }
-func CreateApp(c echo.Context)error{
+//
+//	{
+//	    "appName": "nginx",
+//	    "domain": "ru-ru.kouxi.com",
+//	    "gitURL": "https://github.com/kouxi08/pixivbot",
+//	    "deploymentName": "nginx-deployment"
+//	}
+func CreateApp(c echo.Context) error {
 	userID := 1 // 仮にuserIDは静的に設定
 
 	data, err := pkg.BindData(c)
@@ -118,16 +119,4 @@ func CreateApp(c echo.Context)error{
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	return c.JSON(http.StatusOK, echo.Map{"status": "success"})
-}
-type User struct {
-	Name string `json:"name"`
-	Age  int    `json:"age"`
-}
-
-func Test (c echo.Context)error {
-	u := new(User)
-	if err := c.Bind(u); err != nil {
-		return err
-	}
-	return c.JSON(http.StatusOK, u)
 }

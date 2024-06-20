@@ -1,6 +1,6 @@
-package config
+package kubernetes
 
-type KubeConfig struct {
+type KubeManifest struct {
 	DeploymentName string `json:"deploymentName"`
 	ServiceName    string `json:"serviceName"`
 	IngressName    string `json:"ingressName"`
@@ -9,6 +9,6 @@ type KubeConfig struct {
 	TargetPort     string `json:"targetPort"`
 }
 
-type Config struct {
-	KubeConfig KubeConfig `json:"kubeConfig"`
+type KubeConfig struct {
+	KubeManifest KubeManifest `json:"KubeManifest"`
 }
