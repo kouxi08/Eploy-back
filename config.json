@@ -1,5 +1,5 @@
 {
-  "kubeConfig":{
+  "KubeManifest":{
     "deploymentName": "-deployment",
     "serviceName": "-service",
     "ingressName": "-ingress",
