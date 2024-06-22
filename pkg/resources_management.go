@@ -12,15 +12,15 @@ import (
 func CreateResources(siteName string, targetPort string) {
 	utils, _ := utils.LoadConfig("config.json")
 
-	// deploymentName := fmt.Sprintf("%s%s", siteName, config.KubeConfig.DeploymentName)
+	// deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
 	serviceName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.ServiceName)
 	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
 	hostName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.HostName)
-	// registryName := fmt.Sprintf("%s%s", config.KubeConfig.RegistryName, siteName)
+	// registryName := fmt.Sprintf("%s%s", utils.KubeManifest.RegistryName, siteName)
 	targetPortInt, _ := strconv.Atoi(targetPort)
 
 	//deployment作成
-	// kubernetes.CreateDeployment(siteName, deploymentName, registryName, )
+	// kubernetes.CreateDeployment(siteName, deploymentName, registryName)
 	//service作成
 	kubernetes.CreateService(siteName, serviceName, targetPortInt)
 	//ingress作成
