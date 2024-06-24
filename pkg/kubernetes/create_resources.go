@@ -127,7 +127,7 @@ func CheckJobCompletion(jobName string) error {
 			// ジョブのポッドのログを取得してエラーメッセージを出力する
 
 			fmt.Printf("Error")
-			return nil
+			return fmt.Errorf("job %s failed with %d failed pods", jobName, job.Status.Failed)
 		}
 		fmt.Println("Job is still running...")
 		time.Sleep(15 * time.Second)
@@ -175,11 +175,11 @@ func GetPodLog(podName string) (string, error) {
 }
 
 // deployment名からpodのステータスを確認する処理
-func GetStatus(deploymentName string)(string,error) {
+func GetStatus(deploymentName string) (string, error) {
 	// k8sの初期化処理
 	clientset, err := NewKubernetesClient()
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
 	namespace := "default"
@@ -187,13 +187,13 @@ func GetStatus(deploymentName string)(string,error) {
 	//デプロイメントの取得
 	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
 	labelSelector := metav1.FormatLabelSelector(deployment.Spec.Selector)
 	replicaSets, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
 	if len(replicaSets.Items) == 0 {
@@ -208,7 +208,7 @@ func GetStatus(deploymentName string)(string,error) {
 	}
 
 	if latestReplicaSet == nil {
-		return "",err
+		return "", err
 	}
 
 	podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
@@ -218,17 +218,17 @@ func GetStatus(deploymentName string)(string,error) {
 	})
 
 	if err != nil {
-		return "",err
+		return "", err
 	}
 
 	if len(podList.Items) > 0 {
 		// 最初のPodのステータスを表示
 		pod := podList.Items[0]
 		fmt.Printf("Pod Name: %s, Status: %s\n", pod.Name, pod.Status.Phase)
-		return string(pod.Status.Phase),nil
+		return string(pod.Status.Phase), nil
 	} else {
 		fmt.Println("No pods found for the deployment")
-		return "No pods found for the deployment",nil
+		return "No pods found for the deployment", nil
 	}
 
 }
