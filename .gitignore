@@ -1,3 +1,4 @@
 .env
 build/config
 main
+service-account-file.json
