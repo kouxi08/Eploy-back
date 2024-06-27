@@ -49,6 +49,7 @@ func GetPodLogHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": resultMessage})
 }
 
+// podのログを表示
 func GetMysqlPodLogHandler(c echo.Context) error {
 	//  databaseの接続処理
 	db, err := pkg.InitMysql()

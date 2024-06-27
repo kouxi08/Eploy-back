@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
@@ -48,6 +49,18 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	//ingress作成
 	kubernetes.CreateIngress(ingressName, hostName, serviceName)
 
+	userID := 1 // 仮にuserIDは静的に設定
+
+	db, err := InitMysql()
+	if err != nil {
+		log.Println("Database initialization failed:", err)
+		return err
+	}
+
+	err = InsertApp(db, appName, userID, hostName, githubUrl, deploymentName)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

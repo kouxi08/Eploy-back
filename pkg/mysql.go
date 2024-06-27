@@ -54,6 +54,7 @@ func GetApp(db *sql.DB, userid int) (*Response, error) {
 	}
 	return result, nil
 }
+
 func InsertApp(db *sql.DB, appName string, userid int, domain string, gitURL string, deploymentName string) error {
 	stmt, err := db.Prepare("INSERT INTO app(application_name,user_id,domain,github_url,deployment_name) VALUES(?,?,?,?,?)")
 	if err != nil {
