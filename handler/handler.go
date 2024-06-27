@@ -34,27 +34,6 @@ func DeleteHandler(c echo.Context) error {
 	return c.String(http.StatusOK, "Resources  delete successfully")
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-// テスト用なので、参考にし終わったらしてください。main.goの/testdeleteの部分も忘れずに
-//////////////////////////////////////////////////////////////////////////////////////////////
-func TestDelete(c echo.Context) error{
-	deployment_name := "nginx-deployment"
-	db, err := pkg.InitMysql()
-	defer db.Close()
-	if err != nil {
-		log.Println(err)
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-	err = pkg.DeleteApp(db,deployment_name)
-	if err != nil {
-		log.Println(err)
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-	return c.String(http.StatusOK, "Resources  delete successfully")
-}
-//////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
-
 // アプリケーションのログを取得
 func GetPodLogHandler(c echo.Context) error {
 	podName := c.QueryParam("podName")
