@@ -12,28 +12,6 @@ import (
 
 // アプリケーションの作成
 func CreateHandler(c echo.Context) error {
-
-	siteName := c.FormValue("name")
-	targetPort := c.FormValue("port")
-
-	pkg.CreateResources(siteName, targetPort)
-
-	return c.String(http.StatusOK, "Resources added successfully")
-}
-
-// アプリケーションの削除
-func DeleteHandler(c echo.Context) error {
-
-	siteName := c.FormValue("name")
-
-	pkg.DeleteResources(siteName)
-
-	return c.String(http.StatusOK, "Resources  delete successfully")
-}
-
-// Kanikoの処理を作成
-func CreateKanikoHandler(c echo.Context) error {
-	//envファイルを受け渡すために構造体を引っ張ってきてる(他にいい方法があるはず)
 	requestData := new(kubernetes.RequestData)
 	println("Received JSON:", requestData)
 	if err := c.Bind(requestData); err != nil {
@@ -44,6 +22,15 @@ func CreateKanikoHandler(c echo.Context) error {
 	pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
 
 	return c.String(http.StatusOK, "Job create successfully")
+}
+
+// アプリケーションの削除
+func DeleteHandler(c echo.Context) error {
+
+	siteName := c.FormValue("name")
+	pkg.DeleteResources(siteName)
+
+	return c.String(http.StatusOK, "Resources  delete successfully")
 }
 
 // アプリケーションのログを取得
