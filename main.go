@@ -8,6 +8,7 @@ import (
 )
 
 func main() {
+
 	//インスタンス作成
 	e := echo.New()
 
@@ -15,9 +16,6 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
-
-	//podのログを取得(クエリパラメータ,podName="ポッド名")
-	e.GET("/getpodlog", handler.GetPodLogHandler)
 
 	e.GET("/", handler.GetMysqlPodLogHandler)
 
@@ -27,9 +25,11 @@ func main() {
 	//リソース追加処理へ
 	e.POST("/", handler.CreateHandler)
 
+	//ダッシュボード一覧取得
 	e.GET("/dashboard", handler.GetDashboard)
 
-	// e.POST("/createapp", handler.CreateApp)
+	//podのログを取得(クエリパラメータ,podName="ポッド名")
+	e.GET("/getpodlog", handler.GetPodLogHandler)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
