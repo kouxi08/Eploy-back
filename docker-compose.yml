@@ -10,3 +10,8 @@ services:
     tty: true
     volumes:
       - .:/go/src/app
+    networks: 
+          - eploy
+networks: 
+    eploy: 
+     external: true 

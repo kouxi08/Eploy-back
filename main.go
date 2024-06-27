@@ -19,16 +19,17 @@ func main() {
 	//podのログを取得(クエリパラメータ,podName="ポッド名")
 	e.GET("/getpodlog", handler.GetPodLogHandler)
 
-	//リソース追加処理へ
-	e.POST("/", handler.CreateHandler)
-
-	//kanikoのjobを起動する処理
-	e.POST("/kaniko", handler.CreateKanikoHandler)
+	e.GET("/", handler.GetMysqlPodLogHandler)
 
 	//リソース削除処理へ
 	e.PATCH("/", handler.DeleteHandler)
-	e.GET("/", handler.GetMysqlPodLogHandler)
+
+	//リソース追加処理へ
+	e.POST("/", handler.CreateHandler)
+
 	e.GET("/dashboard", handler.GetDashboard)
+
 	e.POST("/createapp", handler.CreateApp)
+
 	e.Logger.Fatal(e.Start(":8088"))
 }

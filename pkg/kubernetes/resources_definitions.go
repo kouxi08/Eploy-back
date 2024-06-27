@@ -32,7 +32,7 @@ func DeploymentDefinition(appName string, deploymentName string, registryName st
 			Name: deploymentName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: int32Ptr(2),
+			Replicas: int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": appName,

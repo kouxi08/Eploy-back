@@ -8,25 +8,6 @@ import (
 	"github.com/kouxi08/Eploy/utils"
 )
 
-// アプリケーションを作成する際に動作させるリソースをまためたやつ
-func CreateResources(siteName string, targetPort string) {
-	utils, _ := utils.LoadConfig("config.json")
-
-	// deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
-	hostName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.HostName)
-	// registryName := fmt.Sprintf("%s%s", utils.KubeManifest.RegistryName, siteName)
-	targetPortInt, _ := strconv.Atoi(targetPort)
-
-	//deployment作成
-	// kubernetes.CreateDeployment(siteName, deploymentName, registryName)
-	//service作成
-	kubernetes.CreateService(siteName, serviceName, targetPortInt)
-	//ingress作成
-	kubernetes.CreateIngress(ingressName, hostName, serviceName)
-}
-
 // kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
 func CreateKanikoResouces(githubUrl string, appName string, targetPort string, envVars []kubernetes.EnvVar) error {
 	config, _ := utils.LoadConfig("config.json")
@@ -46,18 +27,15 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	if err != nil {
 		return err
 	}
-
 	//pvc作成
 	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
 		return fmt.Errorf("failed to create PVC: %v", err)
 	}
-
 	errCh := make(chan error, 1)
 	go func() {
 		//jobの処理状況を監視
 		errCh <- kubernetes.CheckJobCompletion(jobName)
 	}()
-
 	err = <-errCh
 	if err != nil {
 		return err
