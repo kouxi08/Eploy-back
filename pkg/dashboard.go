@@ -29,7 +29,7 @@ func ConvertToJSONDs(rows *sql.Rows) (*Response,error){
 		}
 		status,err := GetStatusResources(dname)
 		if err != nil{
-			fmt.Print(status)
+			fmt.Println(err)
 		}
         app.Status = status
 		apps = append(apps, app)

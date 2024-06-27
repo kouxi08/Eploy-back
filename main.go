@@ -29,7 +29,7 @@ func main() {
 
 	e.GET("/dashboard", handler.GetDashboard)
 
-	e.POST("/createapp", handler.CreateApp)
+	// e.POST("/createapp", handler.CreateApp)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
