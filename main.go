@@ -24,12 +24,17 @@ func main() {
 	//リソース削除処理へ
 	e.PATCH("/", handler.DeleteHandler)
 
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	// リソース削除用に試すものなので参考にし終わったら消してください
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	e.PATCH("/testdelete", handler.TestDelete)
+
 	//リソース追加処理へ
 	e.POST("/", handler.CreateHandler)
 
 	e.GET("/dashboard", handler.GetDashboard)
 
-	e.POST("/createapp", handler.CreateApp)
+	// e.POST("/createapp", handler.CreateApp)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }

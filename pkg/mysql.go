@@ -3,6 +3,7 @@ package pkg
 import (
 	"database/sql"
 	"os"
+	"log"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/kouxi08/Eploy/config"
@@ -63,6 +64,29 @@ func InsertApp(db *sql.DB, appName string, userid int, domain string, gitURL str
 	if err != nil {
 		return err
 	}
+	// 成功時
+	return nil
+}
+
+// appを削除する
+func DeleteApp(db *sql.DB, deploymentName string) error {
+	stmt, err := db.Prepare("DELETE FROM app WHERE deployment_name = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	result,err := stmt.Exec(deploymentName)
+	if err != nil {
+		return err
+	}
+	rowsAffect, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffect == 0 {
+		log.Println("no rows deleted")
+        return nil
+    }
 	// 成功時
 	return nil
 }
