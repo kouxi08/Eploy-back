@@ -65,7 +65,9 @@ func GetMysqlPodLogHandler(c echo.Context) error {
 }
 
 func GetDashboard(c echo.Context) error {
-	userid := 1
+	// userid := 1
+	userid := c.QueryParam("userid")
+
 	db, err := pkg.InitMysql()
 	if err != nil {
 		log.Println(err)
