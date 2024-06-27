@@ -78,6 +78,21 @@ func DeleteResources(siteName string) {
 	kubernetes.DeleteService(serviceName)
 	//ingress削除
 	kubernetes.DeleteIngress(ingressName)
+
+	db, err := InitMysql()
+	defer db.Close()
+	if err != nil {
+		log.Println(err)
+		// return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	err = DeleteApp(db,deploymentName)
+	if err != nil {
+		log.Println(err)
+		// return c.JSON(http.StatusInternalServerError, err)
+	}
+	// return c.String(http.StatusOK, "Resources  delete successfully")
+	
 }
 
 func GetLogPodResources(podName string) (message string, err error) {
