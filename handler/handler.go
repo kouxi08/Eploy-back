@@ -55,7 +55,6 @@ func GetMysqlPodLogHandler(c echo.Context) error {
 	//  databaseの接続処理
 	db, err := pkg.InitMysql()
 	if err != nil {
-		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	// アクセス処理
@@ -68,7 +67,7 @@ func GetMysqlPodLogHandler(c echo.Context) error {
 
 func GetDashboard(c echo.Context) error {
 	// userid := 1
-	userid, err:= strconv.Atoi(c.QueryParam("userid"))
+	userid, err := strconv.Atoi(c.QueryParam("userid"))
 
 	db, err := pkg.InitMysql()
 	if err != nil {
@@ -83,7 +82,6 @@ func GetDashboard(c echo.Context) error {
 	return c.JSON(http.StatusOK, result)
 }
 
-
 // アプリを登録する時の処理、jsonで以下形式で登録
 //
 //	{
@@ -92,23 +90,3 @@ func GetDashboard(c echo.Context) error {
 //	    "gitURL": "https://github.com/kouxi08/pixivbot",
 //	    "deploymentName": "nginx-deployment"
 //	}
-// func CreateApp(c echo.Context) error {
-// 	userID := 1 // 仮にuserIDは静的に設定
-
-// 	data, err := pkg.BindData(c)
-// 	if err != nil {
-// 		return c.JSON(http.StatusBadRequest, err)
-// 	}
-// 	db, err := pkg.InitMysql()
-// 	if err != nil {
-// 		log.Println("Database initialization failed:", err)
-// 		return c.JSON(http.StatusInternalServerError, err)
-// 	}
-
-// 	err = pkg.InsertApp(db, data.AppName, userID, data.Domain, data.GitURL, data.DeploymentName)
-// 	if err != nil {
-// 		log.Println("Error inserting app data:", err)
-// 		return c.JSON(http.StatusInternalServerError, err)
-// 	}
-// 	return c.JSON(http.StatusOK, echo.Map{"status": "success"})
-// }

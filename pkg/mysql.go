@@ -2,8 +2,8 @@ package pkg
 
 import (
 	"database/sql"
-	"os"
 	"log"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/kouxi08/Eploy/config"
@@ -49,6 +49,9 @@ func GetApp(db *sql.DB, userid int) (*Response, error) {
 	}
 	//
 	rows, err := stmt.Query(userid)
+	if err != nil {
+		return nil, err
+	}
 	result, err := ConvertToJSONDs(rows)
 	if err != nil {
 		return nil, err
@@ -76,7 +79,7 @@ func DeleteApp(db *sql.DB, deploymentName string) error {
 		return err
 	}
 	defer stmt.Close()
-	result,err := stmt.Exec(deploymentName)
+	result, err := stmt.Exec(deploymentName)
 	if err != nil {
 		return err
 	}
@@ -86,8 +89,8 @@ func DeleteApp(db *sql.DB, deploymentName string) error {
 	}
 	if rowsAffect == 0 {
 		log.Println("no rows deleted")
-        return nil
-    }
+		return nil
+	}
 	// 成功時
 	return nil
 }

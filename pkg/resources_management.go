@@ -65,7 +65,7 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 }
 
 // アプリケーションを削除する際に動作させるリソースを定義したやつ
-func DeleteResources(siteName string) {
+func DeleteResources(siteName string) error {
 	utils, _ := utils.LoadConfig("config.json")
 
 	deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
@@ -80,19 +80,16 @@ func DeleteResources(siteName string) {
 	kubernetes.DeleteIngress(ingressName)
 
 	db, err := InitMysql()
+	if err != nil {
+		return err
+	}
 	defer db.Close()
-	if err != nil {
-		log.Println(err)
-		// return c.JSON(http.StatusInternalServerError, err)
-	}
 
-	err = DeleteApp(db,deploymentName)
+	err = DeleteApp(db, deploymentName)
 	if err != nil {
-		log.Println(err)
-		// return c.JSON(http.StatusInternalServerError, err)
+		return err
 	}
-	// return c.String(http.StatusOK, "Resources  delete successfully")
-	
+	return nil
 }
 
 func GetLogPodResources(podName string) (message string, err error) {
