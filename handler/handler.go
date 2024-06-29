@@ -11,27 +11,47 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type Response struct {
+	Message string `json:"message"`
+}
+
 // アプリケーションの作成
 func CreateHandler(c echo.Context) error {
 	requestData := new(kubernetes.RequestData)
-	println("Received JSON:", requestData)
+	fmt.Println("Received JSON:", requestData)
 	if err := c.Bind(requestData); err != nil {
 		fmt.Println("Error decoding JSON:", err)
 		return err
 	}
 
-	pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
+	response := Response{
+		Message: "Resources Create successfully",
+	}
 
-	return c.String(http.StatusOK, "Job create successfully")
+	err := pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
+	if err != nil {
+		response = Response{
+			Message: "Resources Create failed",
+		}
+		log.Print(err)
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 // アプリケーションの削除
 func DeleteHandler(c echo.Context) error {
-
 	siteName := c.FormValue("name")
-	pkg.DeleteResources(siteName)
-
-	return c.String(http.StatusOK, "Resources  delete successfully")
+	response := Response{
+		Message: "Resources Delete successfully",
+	}
+	err := pkg.DeleteResources(siteName)
+	if err != nil {
+		response = Response{
+			Message: "Resources Delete failed",
+		}
+		log.Print(err)
+	}
+	return c.JSON(http.StatusOK, response)
 }
 
 // アプリケーションのログを取得
@@ -50,11 +70,11 @@ func GetPodLogHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{"message": resultMessage})
 }
 
-// podのログを表示
 func GetMysqlPodLogHandler(c echo.Context) error {
 	//  databaseの接続処理
 	db, err := pkg.InitMysql()
 	if err != nil {
+		log.Println(err)
 		return c.JSON(http.StatusInternalServerError, err)
 	}
 	// アクセス処理
@@ -81,12 +101,3 @@ func GetDashboard(c echo.Context) error {
 	}
 	return c.JSON(http.StatusOK, result)
 }
-
-// アプリを登録する時の処理、jsonで以下形式で登録
-//
-//	{
-//	    "appName": "nginx",
-//	    "domain": "ru-ru.kouxi.com",
-//	    "gitURL": "https://github.com/kouxi08/pixivbot",
-//	    "deploymentName": "nginx-deployment"
-//	}
