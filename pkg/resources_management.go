@@ -2,30 +2,12 @@ package pkg
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
 	"github.com/kouxi08/Eploy/utils"
 )
-
-// アプリケーションを作成する際に動作させるリソースをまためたやつ
-func CreateResources(siteName string, targetPort string) {
-	utils, _ := utils.LoadConfig("config.json")
-
-	// deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
-	hostName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.HostName)
-	// registryName := fmt.Sprintf("%s%s", utils.KubeManifest.RegistryName, siteName)
-	targetPortInt, _ := strconv.Atoi(targetPort)
-
-	//deployment作成
-	// kubernetes.CreateDeployment(siteName, deploymentName, registryName)
-	//service作成
-	kubernetes.CreateService(siteName, serviceName, targetPortInt)
-	//ingress作成
-	kubernetes.CreateIngress(ingressName, hostName, serviceName)
-}
 
 // kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
 func CreateKanikoResouces(githubUrl string, appName string, targetPort string, envVars []kubernetes.EnvVar) error {
@@ -46,18 +28,15 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	if err != nil {
 		return err
 	}
-
 	//pvc作成
 	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
 		return fmt.Errorf("failed to create PVC: %v", err)
 	}
-
 	errCh := make(chan error, 1)
 	go func() {
 		//jobの処理状況を監視
 		errCh <- kubernetes.CheckJobCompletion(jobName)
 	}()
-
 	err = <-errCh
 	if err != nil {
 		return err
@@ -70,11 +49,23 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	//ingress作成
 	kubernetes.CreateIngress(ingressName, hostName, serviceName)
 
+	userID := 1 // 仮にuserIDは静的に設定
+
+	db, err := InitMysql()
+	if err != nil {
+		log.Println("Database initialization failed:", err)
+		return err
+	}
+
+	err = InsertApp(db, appName, userID, hostName, githubUrl, deploymentName)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
 // アプリケーションを削除する際に動作させるリソースを定義したやつ
-func DeleteResources(siteName string) {
+func DeleteResources(siteName string) error {
 	utils, _ := utils.LoadConfig("config.json")
 
 	deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
@@ -87,6 +78,18 @@ func DeleteResources(siteName string) {
 	kubernetes.DeleteService(serviceName)
 	//ingress削除
 	kubernetes.DeleteIngress(ingressName)
+
+	db, err := InitMysql()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	err = DeleteApp(db, deploymentName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetLogPodResources(podName string) (message string, err error) {

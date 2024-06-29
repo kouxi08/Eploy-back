@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"database/sql"
+	"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -48,12 +49,16 @@ func GetApp(db *sql.DB, userid int) (*Response, error) {
 	}
 	//
 	rows, err := stmt.Query(userid)
+	if err != nil {
+		return nil, err
+	}
 	result, err := ConvertToJSONDs(rows)
 	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
+
 func InsertApp(db *sql.DB, appName string, userid int, domain string, gitURL string, deploymentName string) error {
 	stmt, err := db.Prepare("INSERT INTO app(application_name,user_id,domain,github_url,deployment_name) VALUES(?,?,?,?,?)")
 	if err != nil {
@@ -62,6 +67,29 @@ func InsertApp(db *sql.DB, appName string, userid int, domain string, gitURL str
 	_, err = stmt.Exec(appName, userid, domain, gitURL, deploymentName)
 	if err != nil {
 		return err
+	}
+	// 成功時
+	return nil
+}
+
+// appを削除する
+func DeleteApp(db *sql.DB, deploymentName string) error {
+	stmt, err := db.Prepare("DELETE FROM app WHERE deployment_name = ?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	result, err := stmt.Exec(deploymentName)
+	if err != nil {
+		return err
+	}
+	rowsAffect, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffect == 0 {
+		log.Println("no rows deleted")
+		return nil
 	}
 	// 成功時
 	return nil
