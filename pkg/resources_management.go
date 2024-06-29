@@ -43,11 +43,20 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	}
 
 	//deployment作成
-	kubernetes.CreateDeployment(appName, deploymentName, registryName, envVars)
+	err = kubernetes.CreateDeployment(appName, deploymentName, registryName, envVars)
+	if err != nil {
+		return err
+	}
 	//service作成
-	kubernetes.CreateService(appName, serviceName, targetPortInt)
+	err = kubernetes.CreateService(appName, serviceName, targetPortInt)
+	if err != nil {
+		return err
+	}
 	//ingress作成
-	kubernetes.CreateIngress(ingressName, hostName, serviceName)
+	err = kubernetes.CreateIngress(ingressName, hostName, serviceName)
+	if err != nil {
+		return err
+	}
 
 	userID := 1 // 仮にuserIDは静的に設定
 
@@ -56,10 +65,12 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 		log.Println("Database initialization failed:", err)
 		return err
 	}
+	defer db.Close()
 
 	err = InsertApp(db, appName, userID, hostName, githubUrl, deploymentName)
 	if err != nil {
-		return err
+		log.Println(err)
+
 	}
 	return nil
 }
@@ -73,11 +84,20 @@ func DeleteResources(siteName string) error {
 	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
 
 	//deployment削除
-	kubernetes.DeleteDeployment(deploymentName)
+	err := kubernetes.DeleteDeployment(deploymentName)
+	if err != nil {
+		return err
+	}
 	//service削除
-	kubernetes.DeleteService(serviceName)
+	err = kubernetes.DeleteService(serviceName)
+	if err != nil {
+		return err
+	}
 	//ingress削除
-	kubernetes.DeleteIngress(ingressName)
+	err = kubernetes.DeleteIngress(ingressName)
+	if err != nil {
+		return err
+	}
 
 	db, err := InitMysql()
 	if err != nil {

@@ -47,7 +47,6 @@ func GetApp(db *sql.DB, userid int) (*Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	//
 	rows, err := stmt.Query(userid)
 	if err != nil {
 		return nil, err
