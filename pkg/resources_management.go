@@ -9,10 +9,14 @@ import (
 	"github.com/kouxi08/Eploy/utils"
 )
 
-// kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
-func CreateKanikoResouces(githubUrl string, appName string, targetPort string, envVars []kubernetes.EnvVar) error {
-	config, _ := utils.LoadConfig("config.json")
+type KanikoResult struct {
+	HostName       string
+	DeploymentName string
+}
 
+// kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
+func CreateKanikoResouces(githubUrl string, appName string, targetPort string, envVars []kubernetes.EnvVar) (*KanikoResult, error) {
+	config, _ := utils.LoadConfig("config.json")
 	deploymentName := fmt.Sprintf("%s%s", appName, config.KubeManifest.DeploymentName)
 	serviceName := fmt.Sprintf("%s%s", appName, config.KubeManifest.ServiceName)
 	ingressName := fmt.Sprintf("%s%s", appName, config.KubeManifest.IngressName)
@@ -20,17 +24,17 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	registryName := fmt.Sprintf("%s%s", config.KubeManifest.RegistryName, appName)
 	targetPortInt, err := strconv.Atoi(targetPort)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//job作成
 	jobName, jobUid, err := kubernetes.CreateJob(githubUrl, appName, registryName, envVars)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	//pvc作成
 	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
-		return fmt.Errorf("failed to create PVC: %v", err)
+		return nil, fmt.Errorf("failed to create PVC: %v", err)
 	}
 	errCh := make(chan error, 1)
 	go func() {
@@ -39,23 +43,23 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	}()
 	err = <-errCh
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	//deployment作成
 	err = kubernetes.CreateDeployment(appName, deploymentName, registryName, envVars)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	//service作成
 	err = kubernetes.CreateService(appName, serviceName, targetPortInt)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	//ingress作成
 	err = kubernetes.CreateIngress(ingressName, hostName, serviceName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	userID := 1 // 仮にuserIDは静的に設定
@@ -63,16 +67,20 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 	db, err := InitMysql()
 	if err != nil {
 		log.Println("Database initialization failed:", err)
-		return err
+		return nil, err
 	}
 	defer db.Close()
 
 	err = InsertApp(db, appName, userID, hostName, githubUrl, deploymentName)
 	if err != nil {
 		log.Println(err)
-
 	}
-	return nil
+
+	result := &KanikoResult{
+		HostName:       hostName,
+		DeploymentName: deploymentName,
+	}
+	return result, nil
 }
 
 // アプリケーションを削除する際に動作させるリソースを定義したやつ

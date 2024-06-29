@@ -28,13 +28,14 @@ func CreateHandler(c echo.Context) error {
 		Message: "Resources Create successfully",
 	}
 
-	err := pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
+	result, err := pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
 	if err != nil {
 		response = Response{
 			Message: "Resources Create failed",
 		}
 		log.Print(err)
 	}
+	log.Print(result)
 	return c.JSON(http.StatusOK, response)
 }
 
