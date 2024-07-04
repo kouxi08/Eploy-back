@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"log"
 	"strconv"
 
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
@@ -62,20 +61,6 @@ func CreateKanikoResouces(githubUrl string, appName string, targetPort string, e
 		return nil, err
 	}
 
-	userID := 1 // 仮にuserIDは静的に設定
-
-	db, err := InitMysql()
-	if err != nil {
-		log.Println("Database initialization failed:", err)
-		return nil, err
-	}
-	defer db.Close()
-
-	err = InsertApp(db, appName, userID, hostName, githubUrl, deploymentName)
-	if err != nil {
-		log.Println(err)
-	}
-
 	result := &KanikoResult{
 		HostName:       hostName,
 		DeploymentName: deploymentName,
@@ -107,16 +92,6 @@ func DeleteResources(siteName string) error {
 		return err
 	}
 
-	db, err := InitMysql()
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	err = DeleteApp(db, deploymentName)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
