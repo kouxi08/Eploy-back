@@ -3,30 +3,30 @@ package firebase
 import (
 	"context"
 	"log"
-	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
 )
 
-type firebaseAppInterface interface {
+type FirebaseAppInterface interface {
 	VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error)
 }
 
-type firebaseApp struct {
+type FirebaseApp struct {
 	*firebase.App
 }
 
-func InitFirebaseApp() (*firebaseApp, error) {
-	app, err := firebase.NewApp(context.Background(), nil, option.WithCredentialsJSON([]byte(os.Getenv("GOOGLE_APPLICATION_CREDENTIALS"))))
+func InitFirebaseApp() (*FirebaseApp, error) {
+	opt := option.WithCredentialsFile("./service-account-file.json")
+	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		log.Fatalf("error initializing firebase app: %v\n", err)
 	}
-	return &firebaseApp{app}, nil
+	return &FirebaseApp{app}, nil
 }
 
-func (app *firebaseApp) VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error) {
+func (app *FirebaseApp) VerifyIDToken(ctx context.Context, idToken string) (*auth.Token, error) {
 	client, err := app.Auth(ctx)
 	if err != nil {
 		return nil, err
