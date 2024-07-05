@@ -83,6 +83,10 @@ func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int)
 	return project, nil
 }
 
+func (u *ProjectUsecase) GetProjectStatusByDeploymentName(ctx context.Context, deploymentName string) (string, error) {
+	return pkg.GetStatusResources(deploymentName)
+}
+
 func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) error {
 	// プロジェクト ID からプロジェクト情報を取得
 	project, err := u.ProjectRepo.GetProjectByID(ctx, id, userId)
