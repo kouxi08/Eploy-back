@@ -154,13 +154,14 @@ func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int, userId i
 			name,
 			domain,
 			git_repo_url,
+			deployment_name,
 			created_at
 		FROM
 			projects
 		WHERE
 			id = ? AND user_id = ?`
 
-	err := r.db.QueryRowContext(ctx, query, id, userId).Scan(&project.ID, &project.Name, &project.Domain, &project.GitRepoURL, &project.CreatedAt)
+	err := r.db.QueryRowContext(ctx, query, id, userId).Scan(&project.ID, &project.Name, &project.Domain, &project.GitRepoURL, &project.DeploymentName, &project.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.Project{}, fmt.Errorf("project not found")
