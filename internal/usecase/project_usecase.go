@@ -47,7 +47,7 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 	}
 
 	// CreateKanikoResoucesを呼び出す
-	kanikoResult, err := pkg.CreateKanikoResouces(project.GitRepoURL, project.DeploymentName, strconv.Itoa(project.Port), envVars)
+	kanikoResult, err := pkg.CreateKanikoResouces(project.GitRepoURL, project.Name, strconv.Itoa(project.Port), envVars)
 	if err != nil {
 		return err
 	}

@@ -8,7 +8,7 @@ import (
 type Environment struct {
 	ID        int       `json:"id"`
 	ProjectID int       `json:"project_id"`
-	EnvKey    string    `json:"key"`
+	EnvKey    string    `json:"name"`
 	EnvValue  string    `json:"value"`
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
