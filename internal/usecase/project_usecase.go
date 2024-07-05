@@ -22,7 +22,18 @@ func NewProjectUsecase(repo repository.ProjectRepository) *ProjectUsecase {
 }
 
 func (u *ProjectUsecase) GetProjects(ctx context.Context, userId int) ([]domain.Project, error) {
-	return u.ProjectRepo.GetProjectsByUserID(ctx, userId)
+	projects, err := u.ProjectRepo.GetProjectsByUserID(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	for i, project := range projects {
+		status, err := pkg.GetStatusResources(project.DeploymentName)
+		if err != nil {
+			return nil, err
+		}
+		projects[i].Status = status
+	}
+	return projects, nil
 }
 func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Project, userId int) error {
 	// プロジェクトの環境変数をEnvVarに変換する
@@ -60,7 +71,16 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 }
 
 func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int) (domain.Project, error) {
-	return u.ProjectRepo.GetProjectByID(ctx, id, userId)
+	project, err := u.ProjectRepo.GetProjectByID(ctx, id, userId)
+	if err != nil {
+		return domain.Project{}, err
+	}
+	status, err := pkg.GetStatusResources(project.DeploymentName)
+	if err != nil {
+		return domain.Project{}, err
+	}
+	project.Status = status
+	return project, nil
 }
 
 func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) error {
