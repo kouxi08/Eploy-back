@@ -23,7 +23,7 @@ func (r *ProjectRepository) GetProjectsByUserID(ctx context.Context, userId int)
 			name,
 			git_repo_url,
 			domain,
-			deployment_name,
+			deployment_name
 		FROM 
 			projects 
 		WHERE
