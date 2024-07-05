@@ -22,7 +22,8 @@ func (r *ProjectRepository) GetProjectsByUserID(ctx context.Context, userId int)
 			id,
 			name,
 			git_repo_url,
-			domain
+			domain,
+			deployment_name
 		FROM 
 			projects 
 		WHERE
@@ -36,7 +37,7 @@ func (r *ProjectRepository) GetProjectsByUserID(ctx context.Context, userId int)
 	var projects []domain.Project
 	for rows.Next() {
 		var project domain.Project
-		if err := rows.Scan(&project.ID, &project.Name, &project.GitRepoURL, &project.Domain); err != nil {
+		if err := rows.Scan(&project.ID, &project.Name, &project.GitRepoURL, &project.Domain, &project.DeploymentName); err != nil {
 			return nil, err
 		}
 		projects = append(projects, project)
