@@ -16,6 +16,7 @@ type Project struct {
 	DockerfileDir  string        `json:"dockerfile_dir,omitempty"`
 	Port           int           `json:"port,omitempty"`
 	Environments   []Environment `json:"environments,omitempty"`
+	Status         string        `json:"status,omitempty"`
 	CreatedAt      time.Time     `json:"created_at,omitempty"`
 	UpdatedAt      time.Time     `json:"updated_at,omitempty"`
 }
@@ -65,6 +66,11 @@ func (p *Project) Validate() error {
 		if err := env.Validate(); err != nil {
 			return err
 		}
+	}
+
+	// Validate Status
+	if p.Status == "" {
+		return errors.New("status is required")
 	}
 
 	return nil
