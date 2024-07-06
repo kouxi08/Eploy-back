@@ -90,7 +90,7 @@ func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) 
 		return err
 	}
 	// DeleteResourcesを呼び出す
-	err = pkg.DeleteResources(project.DeploymentName)
+	err = pkg.DeleteResources(project.Name)
 	if err != nil {
 		return err
 	}

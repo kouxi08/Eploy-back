@@ -10,8 +10,24 @@ services:
     tty: true
     volumes:
       - .:/go/src/app
-    networks: 
+    networks:
           - eploy
-networks: 
-    eploy: 
-     external: true 
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: mysql
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - 13307:3306
+    volumes:
+      - ./db-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+        - eploy
+        
+networks:
+    eploy:
+     external: true
