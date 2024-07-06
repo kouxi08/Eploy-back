@@ -22,7 +22,8 @@ func (r *ProjectRepository) GetProjectsByUserID(ctx context.Context, userId int)
 			id,
 			name,
 			git_repo_url,
-			domain
+			domain,
+			deployment_name
 		FROM 
 			projects 
 		WHERE
@@ -36,7 +37,7 @@ func (r *ProjectRepository) GetProjectsByUserID(ctx context.Context, userId int)
 	var projects []domain.Project
 	for rows.Next() {
 		var project domain.Project
-		if err := rows.Scan(&project.ID, &project.Name, &project.GitRepoURL, &project.Domain); err != nil {
+		if err := rows.Scan(&project.ID, &project.Name, &project.GitRepoURL, &project.Domain, &project.DeploymentName); err != nil {
 			return nil, err
 		}
 		projects = append(projects, project)
@@ -153,13 +154,14 @@ func (r *ProjectRepository) GetProjectByID(ctx context.Context, id int, userId i
 			name,
 			domain,
 			git_repo_url,
+			deployment_name,
 			created_at
 		FROM
 			projects
 		WHERE
 			id = ? AND user_id = ?`
 
-	err := r.db.QueryRowContext(ctx, query, id, userId).Scan(&project.ID, &project.Name, &project.Domain, &project.GitRepoURL, &project.CreatedAt)
+	err := r.db.QueryRowContext(ctx, query, id, userId).Scan(&project.ID, &project.Name, &project.Domain, &project.GitRepoURL, &project.DeploymentName, &project.CreatedAt)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return domain.Project{}, fmt.Errorf("project not found")
