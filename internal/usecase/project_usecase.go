@@ -70,19 +70,21 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 	return nil
 }
 
-func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int) (domain.Project, error) {
+func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int) (domain.Project, string, error) {
 	project, err := u.ProjectRepo.GetProjectByID(ctx, id, userId)
 	if err != nil {
-		return domain.Project{}, err
+		return domain.Project{}, "", err
 	}
 	status, err := pkg.GetStatusResources(project.DeploymentName)
 	if err != nil {
-		return domain.Project{}, err
+		return domain.Project{}, "", err
 	}
 	project.Status = status
-	return project, nil
-}
 
+	logs, err := pkg.GetLogPodResources(project.DeploymentName)
+
+	return project, logs, nil
+}
 func (u *ProjectUsecase) GetProjectStatusByDeploymentName(ctx context.Context, deploymentName string) (string, error) {
 	return pkg.GetStatusResources(deploymentName)
 }

@@ -43,6 +43,11 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 	return c.JSON(http.StatusCreated, map[string]interface{}{"project": project})
 }
 
+type GetProjectByIDResponse struct {
+	Project domain.Project `json:"project"`
+	Logs    string         `json:"logs"`
+}
+
 func (h *ProjectHandler) GetProjectByID(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -51,12 +56,12 @@ func (h *ProjectHandler) GetProjectByID(c echo.Context) error {
 
 	ctx := c.Request().Context()
 	userId := c.Get("userId").(int)
-	project, err := h.Usecase.GetProjectByID(ctx, id, userId)
+	project, logs, err := h.Usecase.GetProjectByID(ctx, id, userId)
 	if err != nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 	}
 
-	return c.JSON(http.StatusOK, project)
+	return c.JSON(http.StatusOK, GetProjectByIDResponse{Project: project, Logs: logs})
 }
 
 func (h *ProjectHandler) GetProjectStatusByDeploymentName(c echo.Context) error {
