@@ -79,6 +79,21 @@ func (h *ProjectHandler) GetProjectStatusByDeploymentName(c echo.Context) error 
 	return c.JSON(http.StatusOK, map[string]string{"status": status})
 }
 
+func (h *ProjectHandler) GetProjectLogsByDeploymentName(c echo.Context) error {
+	deploymentName := c.Param("deploymentName")
+	if deploymentName == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid deployment name"})
+	}
+
+	ctx := c.Request().Context()
+	logs, err := h.Usecase.GetProjectLogsByDeploymentName(ctx, deploymentName)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"logs": logs})
+}
+
 func (h *ProjectHandler) DeleteProject(c echo.Context) error {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

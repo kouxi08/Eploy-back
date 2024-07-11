@@ -52,6 +52,7 @@ func main() {
 	e.POST("/projects", projectHandler.CreateProject)
 	e.GET("/projects/:id", projectHandler.GetProjectByID)
 	e.GET("/projects/:deployment_name/status", projectHandler.GetProjectStatusByDeploymentName)
+	e.GET("/projects/:deployment_name/logs", projectHandler.GetProjectLogsByDeploymentName)
 	e.DELETE("/projects/:id", projectHandler.DeleteProject)
 
 	e.Logger.Fatal(e.Start(":8088"))
