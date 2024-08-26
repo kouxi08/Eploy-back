@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/kouxi08/Eploy/pkg"
-	"github.com/kouxi08/Eploy/pkg/kubernetes"
 	"github.com/labstack/echo/v4"
 )
 
@@ -16,28 +14,28 @@ type Response struct {
 }
 
 // アプリケーションの作成
-func CreateHandler(c echo.Context) error {
-	requestData := new(kubernetes.RequestData)
-	fmt.Println("Received JSON:", requestData)
-	if err := c.Bind(requestData); err != nil {
-		fmt.Println("Error decoding JSON:", err)
-		return err
-	}
+// func CreateHandler(c echo.Context) error {
+// 	requestData := new(kubernetes.RequestData)
+// 	fmt.Println("Received JSON:", requestData)
+// 	if err := c.Bind(requestData); err != nil {
+// 		fmt.Println("Error decoding JSON:", err)
+// 		return err
+// 	}
 
-	response := Response{
-		Message: "Resources Create successfully",
-	}
+// 	response := Response{
+// 		Message: "Resources Create successfully",
+// 	}
 
-	result, err := pkg.CreateKanikoResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
-	if err != nil {
-		response = Response{
-			Message: "Resources Create failed",
-		}
-		log.Print(err)
-	}
-	log.Print(result)
-	return c.JSON(http.StatusOK, response)
-}
+// 	result, err := pkg.CreateResouces(requestData.URL, requestData.Name, requestData.Port, requestData.EnvVars)
+// 	if err != nil {
+// 		response = Response{
+// 			Message: "Resources Create failed",
+// 		}
+// 		log.Print(err)
+// 	}
+// 	log.Print(result)
+// 	return c.JSON(http.StatusOK, response)
+// }
 
 // アプリケーションの削除
 func DeleteHandler(c echo.Context) error {

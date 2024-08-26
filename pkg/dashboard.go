@@ -18,7 +18,7 @@ type Response struct {
 }
 
 func ConvertToJSONDs(rows *sql.Rows) (*Response, error) {
-	// mysqlから取得してきたものをjson形式に治す
+	// mysqlから取得してきたものをjson形式に直す
 	var apps []App
 	var dname string
 	var uid string
@@ -27,7 +27,7 @@ func ConvertToJSONDs(rows *sql.Rows) (*Response, error) {
 		if err := rows.Scan(&app.ID, &app.ApplicationName, &uid, &app.Domain, &app.GithubURL, &dname); err != nil {
 			return nil, err
 		}
-		status, err := GetStatusResources(dname)
+		status, err := GetStatusResources(dname, "kaniko")
 		if err != nil {
 			return nil, err
 		}

@@ -60,7 +60,7 @@ func (h *ProjectHandler) GetProjectByID(c echo.Context) error {
 }
 
 func (h *ProjectHandler) GetProjectStatusByDeploymentName(c echo.Context) error {
-	deploymentName := c.Param("deploymentName")
+	deploymentName := c.Param("deployment_name")
 	if deploymentName == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid deployment name"})
 	}

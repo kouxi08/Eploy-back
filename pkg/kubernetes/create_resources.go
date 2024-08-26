@@ -174,8 +174,13 @@ func GetPodLog(podName string) (string, error) {
 	return logOutput, nil
 }
 
+// プロジェクトに応じてのDockerfileを作成
+func CreateDockerfile() {
+
+}
+
 // deployment名からpodのステータスを確認する処理
-func GetStatus(deploymentName string) (string, error) {
+func GetDeploymentStatus(deploymentName string) (string, error) {
 	// k8sの初期化処理
 	clientset, err := NewKubernetesClient()
 	if err != nil {
@@ -231,4 +236,35 @@ func GetStatus(deploymentName string) (string, error) {
 		return "No pods found for the deployment", nil
 	}
 
+}
+
+func GetJobsStatus(jobName string) (string, error) {
+	// k8sの初期化処理
+	clientset, err := NewKubernetesClient()
+	if err != nil {
+		return "", err
+	}
+
+	namespace := "default"
+	response := "AppCreating"
+
+	job, err := clientset.BatchV1().Jobs(namespace).Get(context.Background(), jobName, metav1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+
+	labelSelector := metav1.FormatLabelSelector(job.Spec.Selector)
+	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
+	if err != nil {
+		return "", err
+	}
+	fmt.Print(pods)
+
+	pod := pods.Items[0]
+	if pod.Status.Phase == "Running" {
+		return response, nil
+	} else {
+		response = "Unknown"
+		return response, nil
+	}
 }
