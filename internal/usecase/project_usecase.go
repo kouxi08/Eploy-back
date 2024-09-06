@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/kouxi08/Eploy/internal/domain"
@@ -27,7 +28,7 @@ func (u *ProjectUsecase) GetProjects(ctx context.Context, userId int) ([]domain.
 		return nil, err
 	}
 	for i, project := range projects {
-		status, err := pkg.GetStatusResources(project.DeploymentName)
+		status, err := pkg.GetStatusResources(project.DeploymentName, "kaniko")
 		if err != nil {
 			return nil, err
 		}
@@ -46,24 +47,31 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 		envVars = append(envVars, envVar)
 	}
 
-	// CreateKanikoResoucesを呼び出す
-	kanikoResult, err := pkg.CreateKanikoResouces(project.GitRepoURL, project.Name, strconv.Itoa(project.Port), envVars)
+	Result, err := pkg.CreateResourceNames(project.Name, strconv.Itoa(project.Port))
 	if err != nil {
 		return err
 	}
 
+	go func() {
+		// CreateResoucesを呼び出す
+		err = pkg.CreateResouces(project.GitRepoURL, project.Name, Result, envVars)
+		if err != nil {
+			log.Printf("failed to create resources: %v", err)
+		}
+	}()
+
 	// kanikoResultのDeploymentNameをプロジェクトのDeploymentNameに設定する
-	project.Domain = kanikoResult.HostName
-	project.DeploymentName = kanikoResult.DeploymentName
+	project.Domain = Result.HostName
+	project.DeploymentName = Result.DeploymentName
 
 	// プロジェクトをリポジトリに保存する
 	if err := u.ProjectRepo.CreateProjectWithEnvironments(ctx, project, userId); err != nil {
 		// 何らかの理由で保存に失敗した場合は、削除処理を行う
-		deleteErr := pkg.DeleteResources(kanikoResult.DeploymentName)
-		if deleteErr != nil {
-			// 削除も失敗した場合はログなどで通知するなどの対応が必要です
-			return fmt.Errorf("failed to create project and failed to clean up resources: %v, delete error: %v", err, deleteErr)
-		}
+		// deleteErr := pkg.DeleteResources(Result.DeploymentName)
+		// if deleteErr != nil {
+		// 	// 削除も失敗した場合はログなどで通知するなどの対応が必要です
+		// 	return fmt.Errorf("failed to create project and failed to clean up resources: %v, delete error: %v", err, deleteErr)
+		// }
 		return fmt.Errorf("failed to create project: %v", err)
 	}
 
@@ -75,7 +83,7 @@ func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int)
 	if err != nil {
 		return domain.Project{}, err
 	}
-	status, err := pkg.GetStatusResources(project.DeploymentName)
+	status, err := pkg.GetStatusResources(project.DeploymentName, "kaniko")
 	if err != nil {
 		return domain.Project{}, err
 	}
@@ -84,7 +92,7 @@ func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int)
 }
 
 func (u *ProjectUsecase) GetProjectStatusByDeploymentName(ctx context.Context, deploymentName string) (string, error) {
-	return pkg.GetStatusResources(deploymentName)
+	return pkg.GetStatusResources(deploymentName, "kaniko")
 }
 
 func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) error {
