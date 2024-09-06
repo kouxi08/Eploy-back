@@ -9,16 +9,22 @@ import (
 	"github.com/kouxi08/Eploy/internal/domain"
 	"github.com/kouxi08/Eploy/internal/interfaces/repository"
 	"github.com/kouxi08/Eploy/pkg"
+	"github.com/kouxi08/Eploy/pkg/cloudflare"
 	"github.com/kouxi08/Eploy/pkg/kubernetes"
+	"github.com/kouxi08/Eploy/utils"
 )
 
 type ProjectUsecase struct {
-	ProjectRepo repository.ProjectRepository
+	ProjectRepo   repository.ProjectRepository
+	CloudflareApp *cloudflare.CloudflareAPP
+	ConfigData    *utils.Config
 }
 
-func NewProjectUsecase(repo repository.ProjectRepository) *ProjectUsecase {
+func NewProjectUsecase(repo repository.ProjectRepository, app *cloudflare.CloudflareAPP, config *utils.Config) *ProjectUsecase {
 	return &ProjectUsecase{
-		ProjectRepo: repo,
+		ProjectRepo:   repo,
+		CloudflareApp: app,
+		ConfigData:    config,
 	}
 }
 
@@ -75,6 +81,11 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 		return fmt.Errorf("failed to create project: %v", err)
 	}
 
+	err = u.CloudflareApp.AddRecord(&u.ConfigData.DNSRecords, project.Name)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -110,5 +121,8 @@ func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) 
 	if err != nil {
 		return err
 	}
+
+	err = u.CloudflareApp.DeleteRecord(&u.ConfigData.DNSRecords, project.Name)
+
 	return nil
 }

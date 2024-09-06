@@ -5,5 +5,12 @@
     "ingressName": "-ingress",
     "hostName": ".xxxx.com",
     "registryName": "docker.io/kouxi00/"
+  },
+  "dns_records":{
+    "type": "CNAME",
+    "domain": "xxxx.com",
+    "content": "xxxx.com",
+    "ttl": 120,
+    "proxied": true
   }
 }
