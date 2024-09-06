@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -11,7 +12,9 @@ import (
 	projectHandler "github.com/kouxi08/Eploy/internal/interfaces/handler"
 	customMiddleware "github.com/kouxi08/Eploy/internal/middleware"
 	projectUsecase "github.com/kouxi08/Eploy/internal/usecase"
+	"github.com/kouxi08/Eploy/pkg/cloudflare"
 	"github.com/kouxi08/Eploy/pkg/firebase"
+	"github.com/kouxi08/Eploy/utils"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -26,6 +29,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize Firebase app: %v", err)
 		os.Exit(1)
+	}
+
+	cloudflareApp, err := cloudflare.InitCloudflareApp()
+	if err != nil {
+		log.Fatalf("failed to initialize cloudflare app: %v", err)
+		os.Exit(1)
+	}
+
+	configData, err := utils.LoadConfig("config.json")
+	if err != nil {
+		fmt.Println("Error loading config:", err)
+		return
 	}
 
 	message := os.Getenv("MYSQL_URL")
@@ -45,7 +60,7 @@ func main() {
 	e.Use(customMiddleware.AuthMiddleware(firebaseApp, userRepository))
 
 	projectRepository := projectRepo.NewProjectRepository(db)
-	projectUsecase := projectUsecase.NewProjectUsecase(projectRepository)
+	projectUsecase := projectUsecase.NewProjectUsecase(projectRepository, cloudflareApp, configData)
 	projectHandler := projectHandler.NewProjectHandler(projectUsecase)
 
 	e.GET("/projects", projectHandler.GetProjects)
@@ -53,6 +68,8 @@ func main() {
 	e.GET("/projects/:id", projectHandler.GetProjectByID)
 	e.GET("/projects/:deployment_name/status", projectHandler.GetProjectStatusByDeploymentName)
 	e.DELETE("/projects/:id", projectHandler.DeleteProject)
+
+	// e.POST("/addrecord", projectHandler.AddRecord)
 
 	e.Logger.Fatal(e.Start(":8088"))
 }
