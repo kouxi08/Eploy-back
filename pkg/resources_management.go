@@ -17,13 +17,12 @@ type ResponseNames struct {
 	TargetPortInt  int
 }
 
-func CreateResourceNames(appName string, targetPort string) (*ResponseNames, error) {
-	config, _ := utils.LoadConfig("config.json")
-	deploymentName := fmt.Sprintf("%s%s", appName, config.KubeManifest.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", appName, config.KubeManifest.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", appName, config.KubeManifest.IngressName)
-	hostName := fmt.Sprintf("%s%s", appName, config.KubeManifest.HostName)
-	registryName := fmt.Sprintf("%s%s", config.KubeManifest.RegistryName, appName)
+func CreateResourceNames(kube *utils.KubeManifest, appName string, targetPort string) (*ResponseNames, error) {
+	deploymentName := fmt.Sprintf("%s%s", appName, kube.DeploymentName)
+	serviceName := fmt.Sprintf("%s%s", appName, kube.ServiceName)
+	ingressName := fmt.Sprintf("%s%s", appName, kube.IngressName)
+	hostName := fmt.Sprintf("%s%s", appName, kube.HostName)
+	registryName := fmt.Sprintf("%s%s", kube.RegistryName, appName)
 	targetPortInt, err := strconv.Atoi(targetPort)
 	if err != nil {
 		return nil, err
@@ -42,7 +41,7 @@ func CreateResourceNames(appName string, targetPort string) (*ResponseNames, err
 }
 
 // kanikoを使ってbuild,pushをする際に使用するリソースをまとめたやつ
-func CreateResouces(githubUrl string, appName string, resourceNames *ResponseNames, envVars []kubernetes.EnvVar) error {
+func CreateResouces(k *kubernetes.KubernetesApp, githubUrl string, appName string, resourceNames *ResponseNames, envVars []kubernetes.EnvVar) error {
 	registryName := resourceNames.RegistryName
 	deploymentName := resourceNames.DeploymentName
 	serviceName := resourceNames.ServiceName
@@ -51,18 +50,18 @@ func CreateResouces(githubUrl string, appName string, resourceNames *ResponseNam
 	targetPortInt := resourceNames.TargetPortInt
 
 	//job作成
-	jobName, jobUid, err := kubernetes.CreateJob(githubUrl, appName, registryName, envVars)
+	jobName, jobUid, err := k.CreateJob(githubUrl, appName, registryName, envVars)
 	if err != nil {
 		return err
 	}
 	//pvc作成
-	if err := kubernetes.CreatePvc(jobName, jobUid, appName); err != nil {
+	if err := k.CreatePvc(jobName, jobUid, appName); err != nil {
 		return fmt.Errorf("failed to create PVC: %v", err)
 	}
 	errCh := make(chan error, 1)
 	go func() {
 		//jobの処理状況を監視
-		errCh <- kubernetes.CheckJobCompletion(jobName)
+		errCh <- k.CheckJobCompletion(jobName)
 	}()
 	err = <-errCh
 	if err != nil {
@@ -70,17 +69,17 @@ func CreateResouces(githubUrl string, appName string, resourceNames *ResponseNam
 	}
 
 	//deployment作成
-	err = kubernetes.CreateDeployment(appName, deploymentName, registryName, envVars)
+	err = k.CreateDeployment(appName, deploymentName, registryName, envVars)
 	if err != nil {
 		return err
 	}
 	//service作成
-	err = kubernetes.CreateService(appName, serviceName, targetPortInt)
+	err = k.CreateService(appName, serviceName, targetPortInt)
 	if err != nil {
 		return err
 	}
 	//ingress作成
-	err = kubernetes.CreateIngress(ingressName, hostName, serviceName)
+	err = k.CreateIngress(ingressName, hostName, serviceName)
 	if err != nil {
 		return err
 	}
@@ -88,25 +87,24 @@ func CreateResouces(githubUrl string, appName string, resourceNames *ResponseNam
 }
 
 // アプリケーションを削除する際に動作させるリソースを定義したやつ
-func DeleteResources(siteName string) error {
-	utils, _ := utils.LoadConfig("config.json")
+func DeleteResources(k *kubernetes.KubernetesApp, kube *utils.KubeManifest, siteName string) error {
 
-	deploymentName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.DeploymentName)
-	serviceName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.ServiceName)
-	ingressName := fmt.Sprintf("%s%s", siteName, utils.KubeManifest.IngressName)
+	deploymentName := fmt.Sprintf("%s%s", siteName, kube.DeploymentName)
+	serviceName := fmt.Sprintf("%s%s", siteName, kube.ServiceName)
+	ingressName := fmt.Sprintf("%s%s", siteName, kube.IngressName)
 
 	//deployment削除
-	err := kubernetes.DeleteDeployment(deploymentName)
+	err := k.DeleteDeployment(deploymentName)
 	if err != nil {
 		return err
 	}
 	//service削除
-	err = kubernetes.DeleteService(serviceName)
+	err = k.DeleteService(serviceName)
 	if err != nil {
 		return err
 	}
 	//ingress削除
-	err = kubernetes.DeleteIngress(ingressName)
+	err = k.DeleteIngress(ingressName)
 	if err != nil {
 		return err
 	}
@@ -114,16 +112,16 @@ func DeleteResources(siteName string) error {
 	return nil
 }
 
-func GetLogPodResources(podName string) (message string, err error) {
-	message, err = kubernetes.GetPodLog(podName)
+func GetLogPodResources(k *kubernetes.KubernetesApp, podName string) (message string, err error) {
+	message, err = k.GetPodLog(podName)
 	return
 }
 
 // podのステータスを確認するやつ
-func GetStatusResources(deploymentName string, jobsName string) (status string, err error) {
-	status, err = kubernetes.GetDeploymentStatus(deploymentName)
+func GetStatusResources(k *kubernetes.KubernetesApp, deploymentName string, jobsName string) (status string, err error) {
+	status, err = k.GetDeploymentStatus(deploymentName)
 	if err != nil {
-		status, err = kubernetes.GetJobsStatus(jobsName)
+		status, err = k.GetJobsStatus(jobsName)
 	}
 	if err != nil {
 		return "", err

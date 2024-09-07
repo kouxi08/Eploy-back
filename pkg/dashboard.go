@@ -1,9 +1,5 @@
 package pkg
 
-import (
-	"database/sql"
-)
-
 type App struct {
 	ID              int    `json:"id"`
 	ApplicationName string `json:"application_name"`
@@ -17,23 +13,23 @@ type Response struct {
 	Sites []App `json:"sites"`
 }
 
-func ConvertToJSONDs(rows *sql.Rows) (*Response, error) {
-	// mysqlから取得してきたものをjson形式に直す
-	var apps []App
-	var dname string
-	var uid string
-	for rows.Next() {
-		var app App
-		if err := rows.Scan(&app.ID, &app.ApplicationName, &uid, &app.Domain, &app.GithubURL, &dname); err != nil {
-			return nil, err
-		}
-		status, err := GetStatusResources(dname, "kaniko")
-		if err != nil {
-			return nil, err
-		}
-		app.Status = status
-		apps = append(apps, app)
-	}
-	response := Response{Sites: apps}
-	return &response, nil
-}
+// func ConvertToJSONDs(k *kubernetes.KubernetesApp, rows *sql.Rows) (*Response, error) {
+// 	// mysqlから取得してきたものをjson形式に直す
+// 	var apps []App
+// 	var dname string
+// 	var uid string
+// 	for rows.Next() {
+// 		var app App
+// 		if err := rows.Scan(&app.ID, &app.ApplicationName, &uid, &app.Domain, &app.GithubURL, &dname); err != nil {
+// 			return nil, err
+// 		}
+// 		status, err := GetStatusResources(, dname, "kaniko")
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		app.Status = status
+// 		apps = append(apps, app)
+// 	}
+// 	response := Response{Sites: apps}
+// 	return &response, nil
+// }

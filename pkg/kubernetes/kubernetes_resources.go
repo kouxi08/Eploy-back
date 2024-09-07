@@ -4,25 +4,45 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
 	"time"
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/util/homedir"
 )
 
-// deploymentを作成する処理
-func CreateDeployment(app string, deploymentName string, registryName string, envVars []EnvVar) error {
-	clientset, err := NewKubernetesClient()
+type KubernetesApp struct {
+	app *kubernetes.Clientset
+}
+
+func NewKubernetesClient() (*KubernetesApp, error) {
+	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+	return &KubernetesApp{clientset}, nil
+}
+
+func int32Ptr(i int32) *int32 { return &i }
+
+// deploymentを作成する処理
+func (k *KubernetesApp) CreateDeployment(app string, deploymentName string, registryName string, envVars []EnvVar) error {
 	//deploymentの定義
 	deployment := DeploymentDefinition(app, deploymentName, registryName, envVars)
 
 	//k8sに送信
-	deploymentsClient := clientset.AppsV1().Deployments(apiv1.NamespaceDefault)
+	deploymentsClient := k.app.AppsV1().Deployments(apiv1.NamespaceDefault)
 	result, err := deploymentsClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create deployment: %v", err)
@@ -32,16 +52,12 @@ func CreateDeployment(app string, deploymentName string, registryName string, en
 }
 
 // serviceを作成する処理
-func CreateService(app string, serviceName string, targetPort int) error {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return err
-	}
+func (k *KubernetesApp) CreateService(app string, serviceName string, targetPort int) error {
 	//serviceの定義
 	service := ServiceDefinition(app, serviceName, targetPort)
 
 	//k8sに送信
-	serviceClient := clientset.CoreV1().Services(apiv1.NamespaceDefault)
+	serviceClient := k.app.CoreV1().Services(apiv1.NamespaceDefault)
 	result, err := serviceClient.Create(context.TODO(), service, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create service: %v", err)
@@ -51,16 +67,12 @@ func CreateService(app string, serviceName string, targetPort int) error {
 }
 
 // ingressを作成する処理
-func CreateIngress(ingressName string, hostName string, serviceName string) error {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return err
-	}
+func (k *KubernetesApp) CreateIngress(ingressName string, hostName string, serviceName string) error {
 	//ingressの定義
 	ingress := IngressDefinition(ingressName, hostName, serviceName)
 
 	//k8sに送信
-	ingressClient := clientset.NetworkingV1().Ingresses("default")
+	ingressClient := k.app.NetworkingV1().Ingresses("default")
 	result, err := ingressClient.Create(context.TODO(), ingress, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create ingress: %v", err)
@@ -70,16 +82,12 @@ func CreateIngress(ingressName string, hostName string, serviceName string) erro
 }
 
 // kanikoのjobを生成する処理
-func CreateJob(githubUrl string, appName string, registryName string, envVars []EnvVar) (string, string, error) {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return "", "", err
-	}
+func (k *KubernetesApp) CreateJob(githubUrl string, appName string, registryName string, envVars []EnvVar) (string, string, error) {
 	//jobの定義
 	job := JobDefinition(githubUrl, appName, registryName, envVars)
 
 	//k8sに送信
-	jobClient := clientset.BatchV1().Jobs("default")
+	jobClient := k.app.BatchV1().Jobs("default")
 	result, err := jobClient.Create(context.Background(), job, metav1.CreateOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create job: %v", err)
@@ -91,16 +99,12 @@ func CreateJob(githubUrl string, appName string, registryName string, envVars []
 }
 
 // pvcを作成する処理
-func CreatePvc(jobName string, jobUid string, appName string) error {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return err
-	}
+func (k *KubernetesApp) CreatePvc(jobName string, jobUid string, appName string) error {
 	//pvcの定義
 	pvc := PvcDefinition(jobName, jobUid, appName)
 
 	// PVCを作成
-	pvcClient := clientset.CoreV1().PersistentVolumeClaims("default")
+	pvcClient := k.app.CoreV1().PersistentVolumeClaims("default")
 	result, err := pvcClient.Create(context.Background(), pvc, metav1.CreateOptions{})
 	if err != nil {
 		panic(err.Error())
@@ -110,13 +114,10 @@ func CreatePvc(jobName string, jobUid string, appName string) error {
 }
 
 // jobを監視する処理
-func CheckJobCompletion(jobName string) error {
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return err
-	}
+func (k *KubernetesApp) CheckJobCompletion(jobName string) error {
+
 	for {
-		job, err := clientset.BatchV1().Jobs("default").Get(context.Background(), jobName, metav1.GetOptions{})
+		job, err := k.app.BatchV1().Jobs("default").Get(context.Background(), jobName, metav1.GetOptions{})
 		if err != nil {
 			panic(fmt.Errorf("failed to get job status: %v", err))
 		}
@@ -136,20 +137,14 @@ func CheckJobCompletion(jobName string) error {
 }
 
 // pod内のlogを取得する処理
-func GetPodLog(podName string) (string, error) {
-	// k8sの初期化処理
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func (k *KubernetesApp) GetPodLog(podName string) (string, error) {
 	// k8sの初期化処理
 	namespace := "default" // Specify the namespace
 	fmt.Println(podName)
 
 	// podのLogを取得
 	podLogOpts := apiv1.PodLogOptions{}
-	req := clientset.CoreV1().Pods(namespace).GetLogs(podName, &podLogOpts)
+	req := k.app.CoreV1().Pods(namespace).GetLogs(podName, &podLogOpts)
 	podLogs, err := req.Stream(context.TODO())
 	if err != nil {
 		log.Println(err)
@@ -174,29 +169,67 @@ func GetPodLog(podName string) (string, error) {
 	return logOutput, nil
 }
 
-// プロジェクトに応じてのDockerfileを作成
-func CreateDockerfile() {
+// deploymentを削除する処理
+func (k *KubernetesApp) DeleteDeployment(deploymentName string) error {
 
+	deploymentClient := k.app.AppsV1().Deployments(apiv1.NamespaceDefault)
+	deletePolicy := metav1.DeletePropagationForeground
+
+	fmt.Println("Deleting deployment...")
+	if err := deploymentClient.Delete(context.TODO(), deploymentName, metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}); err != nil {
+		return fmt.Errorf("failed to delete deployment: %v", err)
+	}
+	fmt.Println("Deleted deployment.")
+	return nil
+}
+
+// serviceを削除する処理
+func (k *KubernetesApp) DeleteService(serviceName string) error {
+
+	serviceClient := k.app.CoreV1().Services(apiv1.NamespaceDefault)
+	deletePolicy := metav1.DeletePropagationForeground
+
+	fmt.Println("Deleting service...")
+	if err := serviceClient.Delete(context.TODO(), serviceName, metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}); err != nil {
+		return fmt.Errorf("failed to delete service: %v", err)
+	}
+	fmt.Println("Deleted service.")
+	return nil
+}
+
+// ingressを削除する処理
+func (k *KubernetesApp) DeleteIngress(ingressName string) error {
+
+	ingressClient := k.app.NetworkingV1().Ingresses("default")
+	deletePolicy := metav1.DeletePropagationForeground
+
+	fmt.Println("Deleting ingress...")
+	if err := ingressClient.Delete(context.TODO(), ingressName, metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	}); err != nil {
+		return fmt.Errorf("failed to delete ingress: %v", err)
+	}
+	fmt.Println("Deleted ingress.")
+	return nil
 }
 
 // deployment名からpodのステータスを確認する処理
-func GetDeploymentStatus(deploymentName string) (string, error) {
-	// k8sの初期化処理
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return "", err
-	}
+func (k *KubernetesApp) GetDeploymentStatus(deploymentName string) (string, error) {
 
 	namespace := "default"
 
 	//デプロイメントの取得
-	deployment, err := clientset.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
+	deployment, err := k.app.AppsV1().Deployments(namespace).Get(context.TODO(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	labelSelector := metav1.FormatLabelSelector(deployment.Spec.Selector)
-	replicaSets, err := clientset.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
+	replicaSets, err := k.app.AppsV1().ReplicaSets(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return "", err
 	}
@@ -216,7 +249,7 @@ func GetDeploymentStatus(deploymentName string) (string, error) {
 		return "", err
 	}
 
-	podList, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
+	podList, err := k.app.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{
 		LabelSelector: metav1.FormatLabelSelector(&metav1.LabelSelector{
 			MatchLabels: latestReplicaSet.Spec.Template.Labels,
 		}),
@@ -238,23 +271,18 @@ func GetDeploymentStatus(deploymentName string) (string, error) {
 
 }
 
-func GetJobsStatus(jobName string) (string, error) {
-	// k8sの初期化処理
-	clientset, err := NewKubernetesClient()
-	if err != nil {
-		return "", err
-	}
+func (k *KubernetesApp) GetJobsStatus(jobName string) (string, error) {
 
 	namespace := "default"
 	response := "AppCreating"
 
-	job, err := clientset.BatchV1().Jobs(namespace).Get(context.Background(), jobName, metav1.GetOptions{})
+	job, err := k.app.BatchV1().Jobs(namespace).Get(context.Background(), jobName, metav1.GetOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	labelSelector := metav1.FormatLabelSelector(job.Spec.Selector)
-	pods, err := clientset.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
+	pods, err := k.app.CoreV1().Pods(namespace).List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
 	if err != nil {
 		return "", err
 	}

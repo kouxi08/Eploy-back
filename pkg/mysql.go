@@ -41,22 +41,22 @@ func GetAccessLogs(db *sql.DB, url string) ([]LogsJSON, error) {
 	return result, nil
 }
 
-func GetApp(db *sql.DB, userid int) (*Response, error) {
-	// app側からuseridを取得してくる　注データベースの設計前に作成しているため変更がいるかも
-	stmt, err := db.Prepare("SELECT * FROM app where user_id = ?")
-	if err != nil {
-		return nil, err
-	}
-	rows, err := stmt.Query(userid)
-	if err != nil {
-		return nil, err
-	}
-	result, err := ConvertToJSONDs(rows)
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
+// func GetApp(db *sql.DB, userid int) (*Response, error) {
+// 	// app側からuseridを取得してくる　注データベースの設計前に作成しているため変更がいるかも
+// 	stmt, err := db.Prepare("SELECT * FROM app where user_id = ?")
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	rows, err := stmt.Query(userid)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	result, err := ConvertToJSONDs(rows)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return result, nil
+// }
 
 func InsertApp(db *sql.DB, appName string, userid int, domain string, gitURL string, deploymentName string) error {
 	stmt, err := db.Prepare("INSERT INTO app(application_name,user_id,domain,github_url,deployment_name) VALUES(?,?,?,?,?)")
