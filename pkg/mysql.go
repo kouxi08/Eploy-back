@@ -6,13 +6,15 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kouxi08/Eploy/config"
+	"github.com/joho/godotenv"
 )
 
 // mysqlの初期の接続処理
 func InitMysql() (db *sql.DB, err error) {
 	// .envからmysqlのurlを取得
-	config.Env()
+	if err := godotenv.Load(); err != nil {
+		log.Fatalln(err)
+	}
 	message := os.Getenv("MYSQL_URL")
 	// mysql接続
 	db, err = sql.Open("mysql", message)

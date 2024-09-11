@@ -7,7 +7,7 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kouxi08/Eploy/config"
+	"github.com/joho/godotenv"
 	projectRepo "github.com/kouxi08/Eploy/internal/infrastructure/persistence"
 	projectHandler "github.com/kouxi08/Eploy/internal/interfaces/handler"
 	customMiddleware "github.com/kouxi08/Eploy/internal/middleware"
@@ -24,7 +24,10 @@ import (
 func main() {
 	//インスタンス作成
 	e := echo.New()
-	config.Env()
+
+	if err := godotenv.Load(); err != nil {
+		log.Fatalln(err)
+	}
 
 	firebaseApp, err := firebase.InitFirebaseApp()
 	if err != nil {

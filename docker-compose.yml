@@ -27,7 +27,7 @@ services:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
         - eploy
-        
+
 networks:
     eploy:
      external: true
