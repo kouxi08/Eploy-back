@@ -14,6 +14,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	// "knative.dev/serving/pkg/client/certmanager/clientset/versioned"
+	// "knative.dev/serving/pkg/client/clientset/versioned"
+	// servingv1 "knative.dev/serving/pkg/client/clientset/versioned/typed/serving/v1"
 )
 
 type KubernetesApp struct {
@@ -31,6 +34,7 @@ func NewKubernetesClient() (*KubernetesApp, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &KubernetesApp{clientset}, nil
 }
 
@@ -96,6 +100,10 @@ func (k *KubernetesApp) CreateJob(githubUrl string, appName string, registryName
 	name := result.Name
 
 	return name, uid, nil
+}
+
+func (k *KubernetesApp) CreateKnService(app string) {
+
 }
 
 // pvcを作成する処理

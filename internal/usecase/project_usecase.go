@@ -60,11 +60,14 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 		return err
 	}
 
+	errChan := make(chan error, 1)
+
 	go func() {
 		// CreateResoucesを呼び出す
 		err = pkg.CreateResouces(u.KubernetesApp, project.GitRepoURL, project.Name, Result, envVars)
 		if err != nil {
 			log.Printf("failed to create resources: %v", err)
+			errChan <- err // エラーをチャネルに送信
 		}
 	}()
 
@@ -86,6 +89,15 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 	err = u.CloudflareApp.AddRecord(&u.ConfigData.DNSRecords, project.Name)
 	if err != nil {
 		return err
+	}
+
+	if err = <-errChan; err != nil {
+		// エラーが発生していた場合は、削除処理を行う
+		deleteErr := pkg.DeleteResources(u.KubernetesApp, &u.ConfigData.KubeManifest, Result.DeploymentName)
+		if deleteErr != nil {
+			return fmt.Errorf("failed to create project and failed to clean up resources: %v, delete error: %v", err, deleteErr)
+		}
+		return fmt.Errorf("failed to create resources: %v", err)
 	}
 
 	return nil
