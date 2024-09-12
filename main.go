@@ -7,13 +7,14 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/kouxi08/Eploy/config"
+	"github.com/joho/godotenv"
 	projectRepo "github.com/kouxi08/Eploy/internal/infrastructure/persistence"
 	projectHandler "github.com/kouxi08/Eploy/internal/interfaces/handler"
 	customMiddleware "github.com/kouxi08/Eploy/internal/middleware"
 	projectUsecase "github.com/kouxi08/Eploy/internal/usecase"
 	"github.com/kouxi08/Eploy/pkg/cloudflare"
 	"github.com/kouxi08/Eploy/pkg/firebase"
+	"github.com/kouxi08/Eploy/pkg/kubernetes"
 	"github.com/kouxi08/Eploy/utils"
 
 	"github.com/labstack/echo/v4"
@@ -23,7 +24,10 @@ import (
 func main() {
 	//インスタンス作成
 	e := echo.New()
-	config.Env()
+
+	if err := godotenv.Load(); err != nil {
+		log.Fatalln(err)
+	}
 
 	firebaseApp, err := firebase.InitFirebaseApp()
 	if err != nil {
@@ -34,6 +38,12 @@ func main() {
 	cloudflareApp, err := cloudflare.InitCloudflareApp()
 	if err != nil {
 		log.Fatalf("failed to initialize cloudflare app: %v", err)
+		os.Exit(1)
+	}
+
+	kubernetesApp, err := kubernetes.NewKubernetesClient()
+	if err != nil {
+		log.Fatalf("failed to initialize kubernetes app: %v", err)
 		os.Exit(1)
 	}
 
@@ -60,7 +70,7 @@ func main() {
 	e.Use(customMiddleware.AuthMiddleware(firebaseApp, userRepository))
 
 	projectRepository := projectRepo.NewProjectRepository(db)
-	projectUsecase := projectUsecase.NewProjectUsecase(projectRepository, cloudflareApp, configData)
+	projectUsecase := projectUsecase.NewProjectUsecase(projectRepository, cloudflareApp, configData, kubernetesApp)
 	projectHandler := projectHandler.NewProjectHandler(projectUsecase)
 
 	e.GET("/projects", projectHandler.GetProjects)

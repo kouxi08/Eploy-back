@@ -18,13 +18,15 @@ type ProjectUsecase struct {
 	ProjectRepo   repository.ProjectRepository
 	CloudflareApp *cloudflare.CloudflareAPP
 	ConfigData    *utils.Config
+	KubernetesApp *kubernetes.KubernetesApp
 }
 
-func NewProjectUsecase(repo repository.ProjectRepository, app *cloudflare.CloudflareAPP, config *utils.Config) *ProjectUsecase {
+func NewProjectUsecase(repo repository.ProjectRepository, app *cloudflare.CloudflareAPP, config *utils.Config, kube *kubernetes.KubernetesApp) *ProjectUsecase {
 	return &ProjectUsecase{
 		ProjectRepo:   repo,
 		CloudflareApp: app,
 		ConfigData:    config,
+		KubernetesApp: kube,
 	}
 }
 
@@ -34,7 +36,7 @@ func (u *ProjectUsecase) GetProjects(ctx context.Context, userId int) ([]domain.
 		return nil, err
 	}
 	for i, project := range projects {
-		status, err := pkg.GetStatusResources(project.DeploymentName, "kaniko")
+		status, err := pkg.GetStatusResources(u.KubernetesApp, project.DeploymentName, "kaniko")
 		if err != nil {
 			return nil, err
 		}
@@ -53,16 +55,19 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 		envVars = append(envVars, envVar)
 	}
 
-	Result, err := pkg.CreateResourceNames(project.Name, strconv.Itoa(project.Port))
+	Result, err := pkg.CreateResourceNames(&u.ConfigData.KubeManifest, project.Name, strconv.Itoa(project.Port))
 	if err != nil {
 		return err
 	}
 
+	errChan := make(chan error, 1)
+
 	go func() {
 		// CreateResoucesを呼び出す
-		err = pkg.CreateResouces(project.GitRepoURL, project.Name, Result, envVars)
+		err = pkg.CreateResouces(u.KubernetesApp, project.GitRepoURL, project.Name, Result, envVars)
 		if err != nil {
 			log.Printf("failed to create resources: %v", err)
+			errChan <- err // エラーをチャネルに送信
 		}
 	}()
 
@@ -86,6 +91,15 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 		return err
 	}
 
+	if err = <-errChan; err != nil {
+		// エラーが発生していた場合は、削除処理を行う
+		deleteErr := pkg.DeleteResources(u.KubernetesApp, &u.ConfigData.KubeManifest, Result.DeploymentName)
+		if deleteErr != nil {
+			return fmt.Errorf("failed to create project and failed to clean up resources: %v, delete error: %v", err, deleteErr)
+		}
+		return fmt.Errorf("failed to create resources: %v", err)
+	}
+
 	return nil
 }
 
@@ -94,7 +108,7 @@ func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int)
 	if err != nil {
 		return domain.Project{}, err
 	}
-	status, err := pkg.GetStatusResources(project.DeploymentName, "kaniko")
+	status, err := pkg.GetStatusResources(u.KubernetesApp, project.DeploymentName, "kaniko")
 	if err != nil {
 		return domain.Project{}, err
 	}
@@ -103,7 +117,7 @@ func (u *ProjectUsecase) GetProjectByID(ctx context.Context, id int, userId int)
 }
 
 func (u *ProjectUsecase) GetProjectStatusByDeploymentName(ctx context.Context, deploymentName string) (string, error) {
-	return pkg.GetStatusResources(deploymentName, "kaniko")
+	return pkg.GetStatusResources(u.KubernetesApp, deploymentName, "kaniko")
 }
 
 func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) error {
@@ -113,7 +127,7 @@ func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) 
 		return err
 	}
 	// DeleteResourcesを呼び出す
-	err = pkg.DeleteResources(project.Name)
+	err = pkg.DeleteResources(u.KubernetesApp, &u.ConfigData.KubeManifest, project.Name)
 	if err != nil {
 		return err
 	}
@@ -123,6 +137,9 @@ func (u *ProjectUsecase) DeleteProject(ctx context.Context, id int, userId int) 
 	}
 
 	err = u.CloudflareApp.DeleteRecord(&u.ConfigData.DNSRecords, project.Name)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

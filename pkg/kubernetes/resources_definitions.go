@@ -175,6 +175,7 @@ func JobDefinition(githubUrl string, appName string, registryName string, envVar
 								"--dockerfile=/workspace/Dockerfile",
 								"--context=dir:///workspace",
 								"--destination=" + registryName + ":latest",
+								"--insecure",
 							},
 							Env: EnvDefinition(envVars),
 							VolumeMounts: []apiv1.VolumeMount{
@@ -203,7 +204,7 @@ func JobDefinition(githubUrl string, appName string, registryName string, envVar
 							Name: "kaniko-secret",
 							VolumeSource: apiv1.VolumeSource{
 								Secret: &apiv1.SecretVolumeSource{
-									SecretName: "dockerhub-secret",
+									SecretName: "my-registry-secret",
 									Items: []apiv1.KeyToPath{
 										{
 											Key:  ".dockerconfigjson",
