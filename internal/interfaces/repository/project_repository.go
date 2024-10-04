@@ -8,6 +8,7 @@ import (
 )
 
 type ProjectRepository interface {
+	GetProjectName(ctx context.Context, userId int, name string) error
 	GetProjectsByUserID(ctx context.Context, userId int) ([]domain.Project, error)
 	CreateProject(ctx context.Context, tx *sql.Tx, project domain.Project, userId int) (int, error)
 	CreateProjectEnvironments(ctx context.Context, tx *sql.Tx, projectId int, environments []domain.Environment) error

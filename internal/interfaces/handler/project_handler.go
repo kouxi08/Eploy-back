@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/kouxi08/Eploy/internal/domain"
 	"github.com/kouxi08/Eploy/internal/usecase"
@@ -37,6 +38,10 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 	ctx := c.Request().Context()
 	userId := c.Get("userId").(int)
 	if err := h.Usecase.CreateProject(ctx, project, userId); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			// 409 Conflict を返す
+			return c.JSON(http.StatusConflict, map[string]string{"error": "A project with the same name already exists."})
+		}
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 

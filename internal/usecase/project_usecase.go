@@ -44,7 +44,13 @@ func (u *ProjectUsecase) GetProjects(ctx context.Context, userId int) ([]domain.
 	}
 	return projects, nil
 }
+
 func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Project, userId int) error {
+	err := u.ProjectRepo.GetProjectName(ctx, userId, project.Name)
+	if err != nil {
+		return err
+	}
+
 	// プロジェクトの環境変数をEnvVarに変換する
 	var envVars []kubernetes.EnvVar
 	for _, env := range project.Environments {
@@ -95,6 +101,7 @@ func (u *ProjectUsecase) CreateProject(ctx context.Context, project domain.Proje
 		// エラーが発生していた場合は、削除処理を行う
 		deleteErr := pkg.DeleteResources(u.KubernetesApp, &u.ConfigData.KubeManifest, Result.DeploymentName)
 		if deleteErr != nil {
+
 			return fmt.Errorf("failed to create project and failed to clean up resources: %v, delete error: %v", err, deleteErr)
 		}
 		return fmt.Errorf("failed to create resources: %v", err)
