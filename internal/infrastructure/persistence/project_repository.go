@@ -16,6 +16,27 @@ func NewProjectRepository(db *sql.DB) *ProjectRepository {
 	return &ProjectRepository{db: db}
 }
 
+func (r *ProjectRepository) GetProjectName(ctx context.Context, userId int, name string) error {
+	query := `
+		SELECT
+			id
+		FROM
+			projects
+		WHERE
+			user_id = ? AND name = ?`
+	rows, err := r.db.QueryContext(ctx, query, userId, name)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		return fmt.Errorf("an application with the name '%s' already exists for this user", name)
+	}
+
+	return nil
+}
+
 func (r *ProjectRepository) GetProjectsByUserID(ctx context.Context, userId int) ([]domain.Project, error) {
 	query := `
 		SELECT 
